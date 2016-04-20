@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model.xml;
 
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -25,7 +26,7 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+
 
 /**
  * Additional metadata about a table as expressed in XML instead of from
@@ -33,8 +34,8 @@ import java.util.logging.Logger;
  *
  * @author John Currier
  */
+@Slf4j
 public class TableMeta {
-    private static final Logger logger = Logger.getLogger(TableMeta.class.getName());
     private final String name;
     private final String comments;
     private final List<TableColumnMeta> columns = new ArrayList<TableColumnMeta>();
@@ -60,7 +61,7 @@ public class TableMeta {
             remoteSchema = null;
         }
 
-        logger.fine("Found XML table metadata for " + name +
+        logger.debug("Found XML table metadata for " + name +
                 " remoteSchema: " + remoteSchema +
                 " comments: " + comments);
 

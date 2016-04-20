@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model.xml;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.InvalidConfigurationException;
 import org.w3c.dom.Document;
@@ -40,7 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+
 
 /**
  * Additional metadata about a schema as expressed in XML instead of from
@@ -48,11 +49,12 @@ import java.util.logging.Logger;
  *
  * @author John Currier
  */
+@Slf4j
 public class SchemaMeta {
     private final List<TableMeta> tables = new ArrayList<TableMeta>();
     private final String comments;
     private final File metaFile;
-    private final Logger logger = Logger.getLogger(getClass().getName());
+
 
     public SchemaMeta(String xmlMeta, String dbName, String schema) throws InvalidConfigurationException {
         File meta = new File(xmlMeta);

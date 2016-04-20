@@ -18,11 +18,13 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 import static java.sql.DatabaseMetaData.*;
 
@@ -31,9 +33,9 @@ import static java.sql.DatabaseMetaData.*;
  * Foreign Key Constraint</a> that "ties" a child table to a parent table
  * via foreign and primary keys.
  */
+@Slf4j
 public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
-    private final static Logger logger = Logger.getLogger(ForeignKeyConstraint.class.getName());
-    private final static boolean finerEnabled = logger.isLoggable(Level.FINER);
+    private final static boolean finerEnabled = logger.isTraceEnabled();
     private final String name;
     private final List<TableColumn> parentColumns = new ArrayList<TableColumn>();
     private final Table childTable;
@@ -53,7 +55,7 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
     ForeignKeyConstraint(Table child, String name, int updateRule, int deleteRule) {
         this.name = name; // implied constraints will have a null name and override getName()
         if (finerEnabled)
-            logger.finer("Adding foreign key constraint '" + getName() + "' to " + child);
+            logger.trace("Adding foreign key constraint '" + getName() + "' to " + child);
         childTable = child;
         this.deleteRule = deleteRule;
         this.updateRule = updateRule;

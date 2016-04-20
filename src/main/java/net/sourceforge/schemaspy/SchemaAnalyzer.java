@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.*;
 import net.sourceforge.schemaspy.model.xml.SchemaMeta;
 import net.sourceforge.schemaspy.util.*;
@@ -40,13 +41,14 @@ import java.util.*;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 /**
  * @author John Currier
  */
+@Slf4j
 public class SchemaAnalyzer {
-    private final Logger logger = Logger.getLogger(getClass().getName());
+
     private boolean fineEnabled;
 
     /**
@@ -164,18 +166,7 @@ public class SchemaAnalyzer {
                 return null;
             }
 
-            // set the log level for the root logger
-            Logger.getLogger("").setLevel(config.getLogLevel());
-
-            // clean-up console output a bit
-            for (Handler handler : Logger.getLogger("").getHandlers()) {
-                if (handler instanceof ConsoleHandler) {
-                    ((ConsoleHandler) handler).setFormatter(new LogFormatter());
-                    handler.setLevel(config.getLogLevel());
-                }
-            }
-
-            fineEnabled = logger.isLoggable(Level.FINE);
+            fineEnabled = logger.isDebugEnabled();
             logger.info("Starting schema analysis");
 
             long start = System.currentTimeMillis();
@@ -216,7 +207,7 @@ public class SchemaAnalyzer {
                 StringBuilder msg = new StringBuilder("Unrecognized option(s):");
                 for (String remnant : config.getRemainingParameters())
                     msg.append(" " + remnant);
-                logger.warning(msg.toString());
+                logger.warn(msg.toString());
             }
 
             String driverClass = properties.getProperty("driver");
@@ -442,7 +433,7 @@ public class SchemaAnalyzer {
                     if (!fineEnabled)
                         System.out.print('.');
                     else
-                        logger.fine("Writing details of " + table.getName());
+                        logger.debug("Writing details of " + table.getName());
 
                     out = new LineWriter(new File(outputDir, "tables/" + table.getName() + ".html"), 24 * 1024, config.getCharset());
                     tableFormatter.write(db, table, hasOrphans, outputDir, stats, out);
@@ -525,7 +516,7 @@ public class SchemaAnalyzer {
                     System.out.println("(" + (end - startDiagrammingDetails) / 1000 + "sec)");
                 logger.info("Wrote table details in " + (end - startDiagrammingDetails) / 1000 + " seconds");
 
-                if (logger.isLoggable(Level.INFO)) {
+                if (logger.isInfoEnabled()) {
                     logger.info("Wrote relationship details of " + tables.size() + " tables/views to directory '" + config.getOutputDir() + "' in " + (end - start) / 1000 + " seconds.");
                     logger.info("View the results by opening " + new File(config.getOutputDir(), "index.html"));
                 } else {
@@ -560,7 +551,7 @@ public class SchemaAnalyzer {
     */
     private Connection getConnection(Config config, String connectionURL,
                                      String driverClass, String driverPath) throws FileNotFoundException, IOException {
-        if (logger.isLoggable(Level.INFO)) {
+        if (logger.isInfoEnabled()) {
             logger.info("Using database properties:");
             logger.info("  " + config.getDbPropertiesLoadedFrom());
         } else {

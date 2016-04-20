@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.xml.ForeignKeyMeta;
 import net.sourceforge.schemaspy.model.xml.TableColumnMeta;
@@ -26,7 +27,7 @@ import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
 
 import java.sql.*;
 import java.util.*;
-import java.util.logging.Logger;
+
 import java.util.regex.Pattern;
 
 /**
@@ -35,8 +36,8 @@ import java.util.regex.Pattern;
  *
  * @author John Currier
  */
+@Slf4j
 public class Table implements Comparable<Table> {
-    private final static Logger logger = Logger.getLogger(Table.class.getName());
     protected final CaseInsensitiveMap<TableColumn> columns = new CaseInsensitiveMap<TableColumn>();
     protected final Database db;
     protected final Properties properties;
@@ -69,7 +70,7 @@ public class Table implements Comparable<Table> {
         this.name = name;
         this.db = db;
         this.properties = properties;
-        logger.fine("Creating " + getClass().getSimpleName().toLowerCase() + " " +
+        logger.trace("Creating " + getClass().getSimpleName().toLowerCase() + " " +
                 schema == null ? name : (schema + '.' + name));
         setComments(comments);
         initColumns(excludeIndirectColumns, excludeColumns);
@@ -195,15 +196,15 @@ public class Table implements Comparable<Table> {
                     childColumn.addParent(parentColumn, foreignKey);
                     parentColumn.addChild(childColumn, foreignKey);
                 } else {
-                    logger.warning("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
+                    logger.warn("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
                             "' - Column '" + pkColName + "' doesn't exist in table '" + parentTable + "'");
                 }
             } else {
-                logger.warning("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
+                logger.warn("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
                         "' - Unknown Referenced Table '" + pkTableName + "'");
             }
         } else {
-            logger.warning("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
+            logger.warn("Couldn't add FK '" + foreignKey.getName() + "' to table '" + this +
                     "' - Column '" + fkColName + "' doesn't exist");
         }
     }
@@ -327,8 +328,8 @@ public class Table implements Comparable<Table> {
         } catch (SQLException exc) {
             if (forceQuotes) {
                 // don't completely choke just because we couldn't do this....
-                logger.warning("Failed to determine auto increment status: " + exc);
-                logger.warning("SQL: " + sql.toString());
+                logger.warn("Failed to determine auto increment status: " + exc);
+                logger.warn("SQL: " + sql.toString());
             } else {
                 initColumnAutoUpdate(true);
             }
@@ -400,7 +401,7 @@ public class Table implements Comparable<Table> {
                     addIndex(rs);
             }
         } catch (SQLException exc) {
-            logger.warning("Unable to extract index info for table '" + getName() + "' in schema '" + getSchema() + "': " + exc);
+            logger.warn("Unable to extract index info for table '" + getName() + "' in schema '" + getSchema() + "': " + exc);
         } finally {
             if (rs != null)
                 rs.close();
@@ -428,8 +429,8 @@ public class Table implements Comparable<Table> {
                     addIndex(rs);
             }
         } catch (SQLException sqlException) {
-            logger.warning("Failed to query index information with SQL: " + selectIndexesSql);
-            logger.warning(sqlException.toString());
+            logger.warn("Failed to query index information with SQL: " + selectIndexesSql);
+            logger.warn(sqlException.toString());
             return false;
         } finally {
             if (rs != null) {
@@ -959,11 +960,11 @@ public class Table implements Comparable<Table> {
                 // except nested tables...try using '1' instead
                 return fetchNumRows("count(1)", false);
             } catch (SQLException try3Exception) {
-                logger.warning("Unable to extract the number of rows for table " + getName() + ", using '-1'");
+                logger.warn("Unable to extract the number of rows for table " + getName() + ", using '-1'");
                 if (originalFailure != null)
-                    logger.warning(originalFailure.toString());
-                logger.warning(try2Exception.toString());
-                logger.warning(try3Exception.toString());
+                    logger.warn(originalFailure.toString());
+                logger.warn(try2Exception.toString());
+                logger.warn(try3Exception.toString());
                 return -1;
             }
         }
@@ -1021,7 +1022,7 @@ public class Table implements Comparable<Table> {
             TableColumn col = getColumn(colMeta.getName());
             if (col == null) {
                 if (tableMeta.getRemoteSchema() == null) {
-                    logger.warning("Unrecognized column '" + colMeta.getName() + "' for table '" + getName() + '\'');
+                    logger.warn("Unrecognized column '" + colMeta.getName() + "' for table '" + getName() + '\'');
                     continue;
                 }
 
@@ -1053,7 +1054,7 @@ public class Table implements Comparable<Table> {
                     TableColumn parentColumn = parent.getColumn(fk.getColumnName());
 
                     if (parentColumn == null) {
-                        logger.warning(parent.getName() + '.' + fk.getColumnName() + " doesn't exist");
+                        logger.warn(parent.getName() + '.' + fk.getColumnName() + " doesn't exist");
                     } else {
                         /**
                          * Merely instantiating a foreign key constraint ties it
@@ -1067,7 +1068,7 @@ public class Table implements Comparable<Table> {
                         };
                     }
                 } else {
-                    logger.warning("Undefined table '" + fk.getTableName() + "' referenced by '" + getName() + '.' + col.getName() + '\'');
+                    logger.warn("Undefined table '" + fk.getTableName() + "' referenced by '" + getName() + '.' + col.getName() + '\'');
                 }
             }
         }

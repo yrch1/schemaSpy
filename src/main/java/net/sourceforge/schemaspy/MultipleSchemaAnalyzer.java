@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.ProcessExecutionException;
 import net.sourceforge.schemaspy.util.LineWriter;
 import net.sourceforge.schemaspy.view.HtmlMultipleSchemasIndexPage;
@@ -29,17 +30,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import java.util.regex.Pattern;
 
 /**
  * @author John Currier
  */
+@Slf4j
 public final class MultipleSchemaAnalyzer {
     private static MultipleSchemaAnalyzer instance = new MultipleSchemaAnalyzer();
-    private final Logger logger = Logger.getLogger(getClass().getName());
-    private final boolean fineEnabled = logger.isLoggable(Level.FINE);
+
+    private final boolean fineEnabled = logger.isTraceEnabled();
 
     private MultipleSchemaAnalyzer() {
     }
@@ -145,13 +146,13 @@ public final class MultipleSchemaAnalyzer {
                 String schema = iter.next();
                 if (!schemaRegex.matcher(schema).matches()) {
                     if (fineEnabled) {
-                        logger.fine("Excluding schema " + schema +
+                        logger.debug("Excluding schema " + schema +
                                 ": doesn't match + \"" + schemaRegex + '"');
                     }
                     iter.remove(); // remove those that we're not supposed to analyze
                 } else {
                     if (fineEnabled) {
-                        logger.fine("Including schema " + schema +
+                        logger.debug("Including schema " + schema +
                                 ": matches + \"" + schemaRegex + '"');
                     }
                 }

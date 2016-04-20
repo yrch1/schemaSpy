@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.xml.TableColumnMeta;
 
 import java.sql.DatabaseMetaData;
@@ -25,12 +26,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
+import java.util.regex.Pattern;
+@Slf4j
 public class TableColumn {
-    private static final Logger logger = Logger.getLogger(TableColumn.class.getName());
-    private static final boolean finerEnabled = logger.isLoggable(Level.FINER);
+    private static final boolean finerEnabled = logger.isTraceEnabled();
     private final Table table;
     private final String name;
     private final Object id;
@@ -91,7 +91,7 @@ public class TableColumn {
         isAllExcluded = matches(excludeColumns);
         isExcluded = isAllExcluded || matches(excludeIndirectColumns);
         if (isExcluded && finerEnabled) {
-            logger.finer("Excluding column " + getTable() + '.' + getName() +
+            logger.trace("Excluding column " + getTable() + '.' + getName() +
                     ": matches " + excludeColumns + ":" + isAllExcluded + " " +
                     excludeIndirectColumns + ":" + matches(excludeIndirectColumns));
         }

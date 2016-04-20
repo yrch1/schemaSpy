@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.*;
 import net.sourceforge.schemaspy.util.Inflection;
 
@@ -27,9 +28,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
 
+import java.util.regex.Pattern;
+@Slf4j
 public class DbAnalyzer {
     public static List<ImpliedForeignKeyConstraint> getImpliedConstraints(Collection<Table> tables) {
         List<TableColumn> columnsWithoutParents = new ArrayList<TableColumn>();
@@ -329,8 +330,7 @@ public class DbAnalyzer {
     public static List<String> getPopulatedSchemas(DatabaseMetaData meta, String schemaSpec) throws SQLException {
         Set<String> schemas = new TreeSet<String>(); // alpha sorted
         Pattern schemaRegex = Pattern.compile(schemaSpec);
-        Logger logger = Logger.getLogger(DbAnalyzer.class.getName());
-        boolean logging = logger.isLoggable(Level.FINE);
+        boolean logging = logger.isDebugEnabled();
 
         Iterator<String> iter = getSchemas(meta).iterator();
         while (iter.hasNext()) {
@@ -341,12 +341,12 @@ public class DbAnalyzer {
                     rs = meta.getTables(null, schema, "%", null);
                     if (rs.next()) {
                         if (logging)
-                            logger.fine("Including schema " + schema +
+                            logger.debug("Including schema " + schema +
                                     ": matches + \"" + schemaRegex + "\" and contains tables");
                         schemas.add(schema);
                     } else {
                         if (logging)
-                            logger.fine("Excluding schema " + schema +
+                            logger.debug("Excluding schema " + schema +
                                     ": matches \"" + schemaRegex + "\" but contains no tables");
                     }
                 } catch (SQLException ignore) {
@@ -356,7 +356,7 @@ public class DbAnalyzer {
                 }
             } else {
                 if (logging)
-                    logger.fine("Excluding schema " + schema +
+                    logger.debug("Excluding schema " + schema +
                             ": doesn't match \"" + schemaRegex + '"');
             }
         }

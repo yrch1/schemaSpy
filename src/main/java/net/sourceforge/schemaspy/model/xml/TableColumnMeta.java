@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model.xml;
 
+import lombok.extern.slf4j.Slf4j;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -25,7 +26,7 @@ import org.w3c.dom.NodeList;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
+
 
 /**
  * Additional metadata about a column as expressed in XML instead of from
@@ -33,8 +34,8 @@ import java.util.logging.Logger;
  *
  * @author John Currier
  */
+@Slf4j
 public class TableColumnMeta {
-    private static final Logger logger = Logger.getLogger(TableColumnMeta.class.getName());
     private final String name;
     private final String comments;
     private final boolean isPrimary;
@@ -100,7 +101,7 @@ public class TableColumnMeta {
             isExcluded = false;
         }
 
-        logger.finer("Found XML column metadata for " + name +
+        logger.trace("Found XML column metadata for " + name +
                 " isPrimaryKey: " + isPrimary +
                 " comments: " + comments);
 

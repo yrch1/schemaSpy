@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.xml.SchemaMeta;
 import net.sourceforge.schemaspy.model.xml.TableMeta;
@@ -28,10 +29,10 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
+@Slf4j
 public class Database {
     private final String databaseName;
     private final String schema;
@@ -41,8 +42,8 @@ public class Database {
     private final DatabaseMetaData meta;
     private final Connection connection;
     private final String connectTime = new SimpleDateFormat("EEE MMM dd HH:mm z yyyy").format(new Date());
-    private final Logger logger = Logger.getLogger(getClass().getName());
-    private final boolean fineEnabled = logger.isLoggable(Level.FINE);
+
+    private final boolean fineEnabled = logger.isDebugEnabled();
     private String description;
     private Set<String> sqlKeywords;
     private Pattern invalidIdentifierPattern;
@@ -203,8 +204,8 @@ public class Database {
                         entry.viewSql, properties,
                         excludeIndirectColumns, excludeColumns);
                 views.put(view.getName(), view);
-                if (logger.isLoggable(Level.FINE)) {
-                    logger.fine("Found details of view " + view.getName());
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Found details of view " + view.getName());
                 } else {
                     System.out.print('.');
                 }
@@ -625,7 +626,7 @@ public class Database {
             else
                 remoteTable = new ExplicitRemoteTable(this, remoteSchema, remoteTableName, baseSchema);
 
-            logger.fine("Adding remote table " + fullName);
+            logger.debug("Adding remote table " + fullName);
             remoteTable.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
             remoteTables.put(fullName, remoteTable);
         }
@@ -909,7 +910,7 @@ public class Database {
             // with bizarre illegal names
             if (name.indexOf("$") != -1) {
                 if (fineEnabled) {
-                    logger.fine("Excluding " + clazz + " " + name +
+                    logger.debug("Excluding " + clazz + " " + name +
                             ": embedded $ implies illegal name");
                 }
                 return false;
@@ -917,7 +918,7 @@ public class Database {
 
             if (exclude.matcher(name).matches()) {
                 if (fineEnabled) {
-                    logger.fine("Excluding " + clazz + " " + name +
+                    logger.debug("Excluding " + clazz + " " + name +
                             ": matches exclusion pattern \"" + exclude + '"');
                 }
                 return false;
@@ -926,10 +927,10 @@ public class Database {
             boolean valid = include.matcher(name).matches();
             if (fineEnabled) {
                 if (valid) {
-                    logger.fine("Including " + clazz + " " + name +
+                    logger.debug("Including " + clazz + " " + name +
                             ": matches inclusion pattern \"" + include + '"');
                 } else {
-                    logger.fine("Excluding " + clazz + " " + name +
+                    logger.debug("Excluding " + clazz + " " + name +
                             ": doesn't match inclusion pattern \"" + include + '"');
                 }
             }
@@ -991,8 +992,8 @@ public class Database {
                 tables.put(table.getName(), table);
             }
 
-            if (logger.isLoggable(Level.FINE)) {
-                logger.fine("Found details of table " + table.getName());
+            if (logger.isDebugEnabled()) {
+                logger.debug("Found details of table " + table.getName());
             } else {
                 System.out.print('.');
             }

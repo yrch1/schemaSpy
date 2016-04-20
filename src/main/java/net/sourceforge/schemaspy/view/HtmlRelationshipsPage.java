@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.util.Dot;
@@ -27,16 +28,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 /**
  * The page that contains the overview entity relationship diagrams.
  *
  * @author John Currier
  */
+@Slf4j
 public class HtmlRelationshipsPage extends HtmlDiagramFormatter {
     private static final HtmlRelationshipsPage instance = new HtmlRelationshipsPage();
-    private static final boolean fineEnabled = Logger.getLogger(HtmlRelationshipsPage.class.getName()).isLoggable(Level.FINE);
+    private static final boolean fineEnabled = logger.isDebugEnabled();
 
     /**
      * Singleton: Don't allow instantiation
