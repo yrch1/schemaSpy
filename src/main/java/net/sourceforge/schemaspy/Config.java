@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy;
 
+import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.InvalidConfigurationException;
 import net.sourceforge.schemaspy.util.DbSpecificConfig;
 import net.sourceforge.schemaspy.util.Dot;
@@ -48,6 +49,7 @@ import java.util.regex.PatternSyntaxException;
  *
  * @author John Currier
  */
+@Slf4j
 public class Config {
     public static final String DOT_CHARSET = "UTF-8";
     private static final String ESCAPED_EQUALS = "\\=";
@@ -157,6 +159,7 @@ public class Config {
     public static String getLoadedFromJar() {
         if(loadedFromJar==null){
             String classpath = System.getProperty("java.class.path");
+            logger.error("classpath: " + classpath);
             StringTokenizer aux= new StringTokenizer(classpath, File.pathSeparator);
             while(aux.hasMoreTokens()){
                 String entryPath = aux.nextToken();
@@ -164,7 +167,11 @@ public class Config {
                     continue;
                 }else{
                     loadedFromJar = entryPath;
+                    break;
                 }
+            }
+            if(loadedFromJar==null){
+                loadedFromJar = classpath;
             }
         }
         return loadedFromJar;
