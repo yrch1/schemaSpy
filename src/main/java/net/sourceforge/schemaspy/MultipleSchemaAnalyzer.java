@@ -56,7 +56,7 @@ public final class MultipleSchemaAnalyzer {
         genericCommand.add("-Doneofmultipleschemas=true");
         if (new File(loadedFrom).isDirectory()) {
             genericCommand.add("-cp");
-            genericCommand.add(loadedFrom);
+            genericCommand.add(System.getProperty("java.class.path"));
             genericCommand.add(Main.class.getName());
         } else {
             genericCommand.add("-jar");
@@ -95,7 +95,7 @@ public final class MultipleSchemaAnalyzer {
             command.add(schema);
             command.add("-o");
             command.add(new File(outputDir, schema).toString());
-            System.out.println("Analyzing " + schema);
+            logger.debug("Analyzing " + schema);
             System.out.flush();
             Process java = Runtime.getRuntime().exec(command.toArray(new String[]{}));
             new ProcessOutputReader(java.getInputStream(), System.out).start();

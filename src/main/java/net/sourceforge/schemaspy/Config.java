@@ -105,6 +105,7 @@ public class Config {
     private Boolean adsEnabled;
     private String schemaSpec;  // used in conjunction with evaluateAll
     private boolean populating = false;
+    private static String loadedFromJar;
 
     /**
      * Default constructor. Intended for when you want to inject properties
@@ -154,8 +155,19 @@ public class Config {
     }
 
     public static String getLoadedFromJar() {
-        String classpath = System.getProperty("java.class.path");
-        return new StringTokenizer(classpath, File.pathSeparator).nextToken();
+        if(loadedFromJar==null){
+            String classpath = System.getProperty("java.class.path");
+            StringTokenizer aux= new StringTokenizer(classpath, File.pathSeparator);
+            while(aux.hasMoreTokens()){
+                String entryPath = aux.nextToken();
+                if(entryPath.endsWith(".jar")){
+                    continue;
+                }else{
+                    loadedFromJar = entryPath;
+                }
+            }
+        }
+        return loadedFromJar;
     }
 
     /**
