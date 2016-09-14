@@ -48,5 +48,4 @@ crashlytics.properties
 crashlytics-build.properties
 
 resources/masterDB.properties
-masterDB*
 target
