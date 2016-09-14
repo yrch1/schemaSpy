@@ -864,7 +864,11 @@ public class Database {
         Pattern excludeIndirectColumns = Config.getInstance().getIndirectColumnExclusions();
 
         for (Table table : tables.values()) {
-            table.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
+            try{
+                table.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
+            }catch (Exception e){
+                logger.error("Exception for table " + table.getName(),e);
+            }
         }
     }
 
