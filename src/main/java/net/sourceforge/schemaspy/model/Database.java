@@ -18,6 +18,7 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.xml.SchemaMeta;
@@ -44,6 +45,8 @@ public class Database {
     private final String connectTime = new SimpleDateFormat("EEE MMM dd HH:mm z yyyy").format(new Date());
 
     private final boolean fineEnabled = logger.isDebugEnabled();
+    @Getter
+    private final Config config;
     private String description;
     private Set<String> sqlKeywords;
     private Pattern invalidIdentifierPattern;
@@ -54,6 +57,7 @@ public class Database {
         databaseName = name;
         this.schema = schema;
         description = config.getDescription();
+        this.config = config;
 
         initTables(meta, properties, config);
         if (config.isViewsEnabled())

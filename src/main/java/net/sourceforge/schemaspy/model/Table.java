@@ -20,11 +20,13 @@ package net.sourceforge.schemaspy.model;
 
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.SchemaAnalyzer;
 import net.sourceforge.schemaspy.model.xml.ForeignKeyMeta;
 import net.sourceforge.schemaspy.model.xml.TableColumnMeta;
 import net.sourceforge.schemaspy.model.xml.TableMeta;
 import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
 
+import java.net.URL;
 import java.sql.*;
 import java.util.*;
 
@@ -78,6 +80,25 @@ public class Table implements Comparable<Table> {
         initPrimaryKeys(db.getMetaData());
     }
 
+
+    public Connection getConnection(String url, String user, String password, String driverClass, String driverPath) throws Exception {
+
+        Connection conn = null;
+        Properties connectionProps = new Properties();
+        connectionProps.put("user", user);
+        connectionProps.put("password", password);
+        connectionProps.put("MultiSubnetFailover", "True");
+        connectionProps.put("databaseName", "MasterDB");
+
+        List<URL> classpath = new ArrayList<>();
+        Driver driver = SchemaAnalyzer.getDriver(classpath, driverClass, driverPath);
+
+        conn = driver.connect(url, connectionProps);
+        System.out.println("Connected to database");
+        return conn;
+    }
+
+
     /**
      * "Connect" all of this table's foreign keys to their referenced primary keys
      * (and, in some cases, do the reverse as well).
@@ -89,39 +110,62 @@ public class Table implements Comparable<Table> {
      */
     public void connectForeignKeys(Map<String, Table> tables, Pattern excludeIndirectColumns, Pattern excludeColumns) throws SQLException {
         ResultSet rs = null;
+        Connection conn = null;
 
         try {
-            rs = db.getMetaData().getImportedKeys(null, getSchema(), getName());
+            //conn = getConnection();
+            String url = this.properties.getProperty("connectionSpec");
+            conn = getConnection(url
+                    , db.getConfig().getUser()
+                    , db.getConfig().getPassword()
+                    , db.getConfig().getDriverClass()
+                    , db.getConfig().getDriverPath());
 
-            while (rs.next()) {
-                addForeignKey(rs.getString("FK_NAME"), rs.getString("FKCOLUMN_NAME"),
-                        rs.getString("PKTABLE_SCHEM"), rs.getString("PKTABLE_NAME"),
-                        rs.getString("PKCOLUMN_NAME"),
-                        rs.getInt("UPDATE_RULE"), rs.getInt("DELETE_RULE"),
-                        tables, excludeIndirectColumns, excludeColumns);
-            }
-        } finally {
-            if (rs != null)
-                rs.close();
-        }
-
-        // also try to find all of the 'remote' tables in other schemas that
-        // point to our primary keys (not necessary in the normal case
-        // as we infer this from the opposite direction)
-        if (getSchema() != null) {
             try {
-                rs = db.getMetaData().getExportedKeys(null, getSchema(), getName());
+
+                rs = conn.getMetaData().getImportedKeys(null, getSchema(), getName());
 
                 while (rs.next()) {
-                    String otherSchema = rs.getString("FKTABLE_SCHEM");
-                    if (!getSchema().equals(otherSchema))
-                        db.addRemoteTable(otherSchema, rs.getString("FKTABLE_NAME"), getSchema(), properties, excludeIndirectColumns, excludeColumns);
+                    addForeignKey(rs.getString("FK_NAME"), rs.getString("FKCOLUMN_NAME"),
+                            rs.getString("PKTABLE_SCHEM"), rs.getString("PKTABLE_NAME"),
+                            rs.getString("PKCOLUMN_NAME"),
+                            rs.getInt("UPDATE_RULE"), rs.getInt("DELETE_RULE"),
+                            tables, excludeIndirectColumns, excludeColumns);
                 }
             } finally {
-                if (rs != null)
+                if (rs != null) {
                     rs.close();
+                }
+            }
+
+            // also try to find all of the 'remote' tables in other schemas that
+            // point to our primary keys (not necessary in the normal case
+            // as we infer this from the opposite direction)
+            if (getSchema() != null) {
+                try {
+                    rs = conn.getMetaData().getExportedKeys(null, getSchema(), getName());
+
+                    while (rs.next()) {
+                        String otherSchema = rs.getString("FKTABLE_SCHEM");
+                        if (!getSchema().equals(otherSchema))
+                            db.addRemoteTable(otherSchema, rs.getString("FKTABLE_NAME"), getSchema(), properties, excludeIndirectColumns, excludeColumns);
+                    }
+                } finally {
+                    if (rs != null)
+                        rs.close();
+                }
+            }
+
+
+        } catch (Exception e) {
+            logger.error("Exception", e);
+        } finally {
+            if (conn != null) {
+                conn.close();
             }
         }
+
+
     }
 
     /**

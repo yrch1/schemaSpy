@@ -18,6 +18,8 @@
  */
 package net.sourceforge.schemaspy;
 
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.model.InvalidConfigurationException;
 import net.sourceforge.schemaspy.util.DbSpecificConfig;
@@ -83,6 +85,9 @@ public class Config {
     private Integer maxDbThreads;
     private Integer maxDetailedTables;
     private String driverPath;
+    @Getter
+    @Setter
+    private String driverClass;
     private String css;
     private String charset;
     private String font;

@@ -6,7 +6,7 @@
 
     <groupId>net.sourceforge</groupId>
     <artifactId>schemaspy</artifactId>
-    <version>6.2</version>
+    <version>6.4</version>
 
     <licenses>
         <license>
@@ -79,6 +79,7 @@
             <artifactId>junit</artifactId>
             <version>4.12</version>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>
