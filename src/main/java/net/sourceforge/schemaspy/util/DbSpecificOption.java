@@ -20,8 +20,8 @@ package net.sourceforge.schemaspy.util;
 
 public class DbSpecificOption {
     private final String name;
-    private final String description;
     private Object value;
+    private final String description;
 
     public DbSpecificOption(String name, String value, String description) {
         this.name = name;

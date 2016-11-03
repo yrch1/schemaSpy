@@ -18,10 +18,10 @@
  */
 package net.sourceforge.schemaspy.ui;
 
-import javax.swing.*;
+import java.awt.Component;
+import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
 
 /**
  * @author John Currier

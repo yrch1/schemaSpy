@@ -18,16 +18,25 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.model.*;
-import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
-import net.sourceforge.schemaspy.util.HtmlEncoder;
-import net.sourceforge.schemaspy.util.LineWriter;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.model.Database;
+import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
+import net.sourceforge.schemaspy.model.TableIndex;
+import net.sourceforge.schemaspy.model.View;
+import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
+import net.sourceforge.schemaspy.util.HtmlEncoder;
+import net.sourceforge.schemaspy.util.LineWriter;
 
 /**
  * The page that contains the details of a specific table or view
@@ -36,9 +45,9 @@ import java.util.*;
  */
 public class HtmlTablePage extends HtmlFormatter {
     private static final HtmlTablePage instance = new HtmlTablePage();
-    private final Map<String, String> defaultValueAliases = new HashMap<String, String>();
     private int columnCounter = 0;
 
+    private final Map<String, String> defaultValueAliases = new HashMap<String, String>();
     {
         defaultValueAliases.put("CURRENT TIMESTAMP", "now"); // DB2
         defaultValueAliases.put("CURRENT TIME", "now");      // DB2
@@ -215,11 +224,10 @@ public class HtmlTablePage extends HtmlFormatter {
 
     /**
      * Write our relatives
-     *
-     * @param tableName    String
+     * @param tableName String
      * @param baseRelative TableColumn
-     * @param dumpParents  boolean
-     * @param out          LineWriter
+     * @param dumpParents boolean
+     * @param out LineWriter
      * @throws IOException
      */
     private void writeRelatives(TableColumn baseRelative, boolean dumpParents, String path, boolean even, LineWriter out) throws IOException {
@@ -440,17 +448,17 @@ public class HtmlTablePage extends HtmlFormatter {
 
     /**
      * Generate the .dot file(s) to represent the specified table's relationships.
-     * <p/>
+     *
      * Generates a <TABLENAME>.dot if the table has real relatives.
-     * <p/>
+     *
      * Also generates a <TABLENAME>..implied2degrees.dot if the table has implied relatives within
      * two degrees of separation.
      *
-     * @param table       Table
+     * @param table Table
      * @param diagramsDir File
-     * @return boolean <code>true</code> if the table has implied relatives within two
-     * degrees of separation.
      * @throws IOException
+     * @return boolean <code>true</code> if the table has implied relatives within two
+     *                 degrees of separation.
      */
     private boolean generateDots(Table table, File diagramDir, WriteStats stats) throws IOException {
         File oneDegreeDotFile = new File(diagramDir, table.getName() + ".1degree.dot");

@@ -56,12 +56,12 @@ public class InvalidConfigurationException extends RuntimeException {
         super(cause);
     }
 
-    public String getParamName() {
-        return paramName;
-    }
-
     public InvalidConfigurationException setParamName(String paramName) {
         this.paramName = paramName;
         return this;
+    }
+
+    public String getParamName() {
+        return paramName;
     }
 }

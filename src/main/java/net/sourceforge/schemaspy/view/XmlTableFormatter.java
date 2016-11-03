@@ -18,6 +18,12 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
 import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.model.TableColumn;
@@ -26,9 +32,6 @@ import net.sourceforge.schemaspy.util.DOMUtil;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
-
-import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Formats {@link Table}s into an XML DOM tree.
@@ -57,17 +60,6 @@ public class XmlTableFormatter {
      */
     public static XmlTableFormatter getInstance() {
         return instance;
-    }
-
-    /**
-     * Returns <code>true</code> if the string contains binary data
-     * (chars that are invalid for XML) per http://www.w3.org/TR/REC-xml/#charsets
-     *
-     * @param str
-     * @return
-     */
-    private static boolean isBinary(String str) {
-        return !validXmlChars.matcher(str).matches();
     }
 
     /**
@@ -268,6 +260,17 @@ public class XmlTableFormatter {
         if (table.isView() && (sql = table.getViewSql()) != null) {
             DOMUtil.appendAttribute(tableNode, "viewSql", sql);
         }
+    }
+
+    /**
+     * Returns <code>true</code> if the string contains binary data
+     * (chars that are invalid for XML) per http://www.w3.org/TR/REC-xml/#charsets
+     *
+     * @param str
+     * @return
+     */
+    private static boolean isBinary(String str) {
+        return !validXmlChars.matcher(str).matches();
     }
 
     /**

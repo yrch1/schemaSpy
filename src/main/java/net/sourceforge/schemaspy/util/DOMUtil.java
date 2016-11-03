@@ -18,14 +18,14 @@
  */
 package net.sourceforge.schemaspy.util;
 
-import org.w3c.dom.Node;
-
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
+import org.w3c.dom.Node;
 
 public class DOMUtil {
     public static void printDOM(Node node, LineWriter out) throws TransformerException {
@@ -52,9 +52,8 @@ public class DOMUtil {
 
     /**
      * Append the specified key/value pair of attributes to the <code>Node</code>.
-     *
-     * @param node  Node
-     * @param name  String
+     * @param node Node
+     * @param name String
      * @param value String
      */
     public static void appendAttribute(Node node, String name, String value) {

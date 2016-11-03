@@ -18,18 +18,17 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import net.sourceforge.schemaspy.DbAnalyzer;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
 
 /**
  * This page lists all of the 'things that might not be quite right'

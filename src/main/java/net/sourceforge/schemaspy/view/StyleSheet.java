@@ -18,12 +18,22 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.InvalidConfigurationException;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.*;
-import java.util.*;
 
 /**
  * Represents our CSS style sheet (CSS) with accessors for important
@@ -36,7 +46,6 @@ import java.util.*;
 public class StyleSheet {
     private static StyleSheet instance;
     private final String css;
-    private final List<String> ids = new ArrayList<String>();
     private String bodyBackgroundColor;
     private String tableHeadBackgroundColor;
     private String tableBackgroundColor;
@@ -46,6 +55,7 @@ public class StyleSheet {
     private String indexedColumnBackgroundColor;
     private String selectedTableBackgroundColor;
     private String excludedColumnBackgroundColor;
+    private final List<String> ids = new ArrayList<String>();
 
     private StyleSheet(BufferedReader cssReader) throws IOException {
         String lineSeparator = System.getProperty("line.separator");
@@ -245,7 +255,7 @@ public class StyleSheet {
 
         /**
          * @param cssSection name of the css section
-         * @param propName   name of the missing property in that section
+         * @param propName name of the missing property in that section
          */
         public MissingCssPropertyException(String cssSection, String propName) {
             super("Required property '" + propName + "' was not found for the definition of '" + cssSection + "' in " + Config.getInstance().getCss());

@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  * Implementation of Rails'
  * <a href='http://api.rubyonrails.org/classes/ActiveSupport/CoreExtensions/String/Inflections.html'>Inflections</a>
  * to handle singularization and pluralization of 'Rails strings'.
- * <p/>
+ *
  * Copied from <a href='http://code.google.com/p/rogueweb/'>rogueweb</a>'s port of Rails to Java.
  *
  * @author Anthony Eden
@@ -139,61 +139,7 @@ public class Inflection {
     }
 
     /**
-     * Return the pluralized version of a word.
-     *
-     * @param word The word
-     * @return The pluralized word
-     */
-    public static String pluralize(String word) {
-        if (Inflection.isUncountable(word)) {
-            return word;
-        }
-
-        for (Inflection inflection : plural) {
-            if (inflection.match(word)) {
-                return inflection.replace(word);
-            }
-        }
-        return word;
-    }
-
-    /**
-     * Return the singularized version of a word.
-     *
-     * @param word The word
-     * @return The singularized word
-     */
-    public static String singularize(String word) {
-        if (Inflection.isUncountable(word)) {
-            return word;
-        }
-
-        for (Inflection inflection : singular) {
-            //System.out.println(word + " matches " + inflection.pattern + "? (ignore case: " + inflection.ignoreCase + ")");
-            if (inflection.match(word)) {
-                //System.out.println("match!");
-                return inflection.replace(word);
-            }
-        }
-        return word;
-    }
-
-    /**
-     * Return true if the word is uncountable.
-     *
-     * @param word The word
-     * @return True if it is uncountable
-     */
-    public static boolean isUncountable(String word) {
-        for (String w : uncountable) {
-            if (w.equalsIgnoreCase(word)) return true;
-        }
-        return false;
-    }
-
-    /**
      * Does the given word match?
-     *
      * @param word The word
      * @return True if it matches the inflection pattern
      */
@@ -217,5 +163,55 @@ public class Inflection {
             flags = flags | Pattern.CASE_INSENSITIVE;
         }
         return Pattern.compile(pattern, flags).matcher(word).replaceAll(replacement);
+    }
+
+    /**
+     * Return the pluralized version of a word.
+     * @param word The word
+     * @return The pluralized word
+     */
+    public static String pluralize(String word) {
+        if (Inflection.isUncountable(word)) {
+            return word;
+        }
+
+        for (Inflection inflection : plural) {
+            if (inflection.match(word)) {
+                return inflection.replace(word);
+            }
+        }
+        return word;
+    }
+
+    /**
+     * Return the singularized version of a word.
+     * @param word The word
+     * @return The singularized word
+     */
+    public static String singularize(String word) {
+        if (Inflection.isUncountable(word)) {
+            return word;
+        }
+
+        for (Inflection inflection : singular) {
+            //System.out.println(word + " matches " + inflection.pattern + "? (ignore case: " + inflection.ignoreCase + ")");
+            if (inflection.match(word)) {
+                //System.out.println("match!");
+                return inflection.replace(word);
+            }
+        }
+        return word;
+    }
+
+    /**
+     * Return true if the word is uncountable.
+     * @param word The word
+     * @return True if it is uncountable
+     */
+    public static boolean isUncountable(String word) {
+        for (String w : uncountable) {
+            if (w.equalsIgnoreCase(word)) return true;
+        }
+        return false;
     }
 }

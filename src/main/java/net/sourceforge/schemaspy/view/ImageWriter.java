@@ -18,10 +18,10 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.util.ResourceWriter;
-
 import java.io.File;
 import java.io.IOException;
+
+import net.sourceforge.schemaspy.util.ResourceWriter;
 
 public class ImageWriter extends ResourceWriter {
     private static ImageWriter instance = new ImageWriter();

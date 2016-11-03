@@ -18,14 +18,20 @@
  */
 package net.sourceforge.schemaspy;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  * @author John Currier
  */
 public class Revision {
-    private static final String resourceName = "/schemaSpy.rev";
     private static String rev = "Unknown";
+    private static final String resourceName = "/schemaSpy.rev";
 
     static {
         initialize();
@@ -56,6 +62,11 @@ public class Revision {
         }
     }
 
+    @Override
+    public String toString() {
+        return rev;
+    }
+
     public static void main(String[] args) throws IOException {
         File entriesFile = new File(".svn", "entries");
         BufferedReader entries = new BufferedReader(new FileReader(entriesFile));
@@ -75,10 +86,5 @@ public class Revision {
 
         initialize();
         System.out.println("Subversion revision " + new Revision());
-    }
-
-    @Override
-    public String toString() {
-        return rev;
     }
 }

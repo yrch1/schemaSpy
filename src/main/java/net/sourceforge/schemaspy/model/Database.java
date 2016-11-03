@@ -18,38 +18,55 @@
  */
 package net.sourceforge.schemaspy.model;
 
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.MissingResourceException;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.model.xml.SchemaMeta;
 import net.sourceforge.schemaspy.model.xml.TableMeta;
 import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
 
-import java.sql.*;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.Date;
-import java.util.logging.Level;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-@Slf4j
 public class Database {
+
+    @Getter
     private final String databaseName;
     private final String schema;
+    private String description;
     private final Map<String, Table> tables = new CaseInsensitiveMap<Table>();
     private final Map<String, View> views = new CaseInsensitiveMap<View>();
     private final Map<String, Table> remoteTables = new CaseInsensitiveMap<Table>(); // key: schema.tableName value: RemoteTable
     private final DatabaseMetaData meta;
     private final Connection connection;
     private final String connectTime = new SimpleDateFormat("EEE MMM dd HH:mm z yyyy").format(new Date());
-
-    private final boolean fineEnabled = logger.isDebugEnabled();
-    @Getter
-    private final Config config;
-    private String description;
     private Set<String> sqlKeywords;
     private Pattern invalidIdentifierPattern;
+    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final boolean fineEnabled = logger.isLoggable(Level.FINE);
+
+    @Getter
+    private final Config config;
 
     public Database(Config config, Connection connection, DatabaseMetaData meta, String name, String schema, Properties properties, SchemaMeta schemaMeta) throws SQLException, MissingResourceException {
         this.connection = connection;
@@ -134,8 +151,78 @@ public class Database {
     }
 
     /**
+     *  "macro" to validate that a table is somewhat valid
+     */
+    class NameValidator {
+        private final String clazz;
+        private final Pattern include;
+        private final Pattern exclude;
+        private final Set<String> validTypes;
+
+        /**
+         * @param clazz      table or view
+         * @param include
+         * @param exclude
+         * @param verbose
+         * @param validTypes
+         */
+        NameValidator(String clazz, Pattern include, Pattern exclude, String[] validTypes) {
+            this.clazz = clazz;
+            this.include = include;
+            this.exclude = exclude;
+            this.validTypes = new HashSet<String>();
+            for (String type : validTypes) {
+                this.validTypes.add(type.toUpperCase());
+            }
+        }
+
+        /**
+         * Returns <code>true</code> if the table/view name is deemed "valid"
+         *
+         * @param name name of the table or view
+         * @param type type as returned by metadata.getTables():TABLE_TYPE
+         * @return
+         */
+        boolean isValid(String name, String type) {
+            // some databases (MySQL) return more than we wanted
+            if (!validTypes.contains(type.toUpperCase()))
+                return false;
+
+            // Oracle 10g introduced problematic flashback tables
+            // with bizarre illegal names
+            if (name.indexOf("$") != -1) {
+                if (fineEnabled) {
+                    logger.fine("Excluding " + clazz + " " + name +
+                            ": embedded $ implies illegal name");
+                }
+                return false;
+            }
+
+            if (exclude.matcher(name).matches()) {
+                if (fineEnabled) {
+                    logger.fine("Excluding " + clazz + " " + name +
+                            ": matches exclusion pattern \"" + exclude + '"');
+                }
+                return false;
+            }
+
+            boolean valid = include.matcher(name).matches();
+            if (fineEnabled) {
+                if (valid) {
+                    logger.fine("Including " + clazz + " " + name +
+                            ": matches inclusion pattern \"" + include + '"');
+                } else {
+                    logger.fine("Excluding " + clazz + " " + name +
+                            ": doesn't match inclusion pattern \"" + include + '"');
+                }
+            }
+            return valid;
+        }
+    }
+
+    /**
      * Create/initialize any tables in the schema.
-     *
+
      * @param metadata
      * @param properties
      * @param config
@@ -208,8 +295,8 @@ public class Database {
                         entry.viewSql, properties,
                         excludeIndirectColumns, excludeColumns);
                 views.put(view.getName(), view);
-                if (logger.isDebugEnabled()) {
-                    logger.debug("Found details of view " + view.getName());
+                if (logger.isLoggable(Level.FINE)) {
+                    logger.fine("Found details of view " + view.getName());
                 } else {
                     System.out.print('.');
                 }
@@ -218,10 +305,40 @@ public class Database {
     }
 
     /**
+     * Collection of fundamental table/view metadata
+     */
+    private class BasicTableMeta {
+        @SuppressWarnings("hiding")
+        final String schema;
+        final String name;
+        final String type;
+        final String remarks;
+        final String viewSql;
+        final int numRows;  // -1 if not determined
+
+        /**
+         * @param schema
+         * @param name
+         * @param type    typically "TABLE" or "VIEW"
+         * @param remarks
+         * @param text    optional textual SQL used to create the view
+         * @param numRows number of rows, or -1 if not determined
+         */
+        BasicTableMeta(String schema, String name, String type, String remarks, String text, int numRows) {
+            this.schema = schema;
+            this.name = name;
+            this.type = type;
+            this.remarks = remarks;
+            viewSql = text;
+            this.numRows = numRows;
+        }
+    }
+
+    /**
      * Return a list of basic details of the tables in the schema.
      *
      * @param metadata
-     * @param forTables  true if we're getting table data, false if getting view data
+     * @param forTables true if we're getting table data, false if getting view data
      * @param properties
      * @return
      * @throws SQLException
@@ -325,7 +442,8 @@ public class Database {
      * E.g. Oracle doesn't have a REMARKS column at all.
      * This method ignores those types of failures, replacing them with null.
      */
-    public String getOptionalString(ResultSet rs, String columnName) {
+    public String getOptionalString(ResultSet rs, String columnName)
+    {
         try {
             return rs.getString(columnName);
         } catch (SQLException ignore) {
@@ -598,11 +716,10 @@ public class Database {
      * <li>:owner - alias for :schema
      * <li>:table - replaced with the name of the table
      * </ol>
-     *
-     * @param sql       String - SQL without question marks
+     * @param sql String - SQL without question marks
      * @param tableName String - <code>null</code> if the statement doesn't deal with <code>Table</code>-level details.
-     * @return PreparedStatement
      * @throws SQLException
+     * @return PreparedStatement
      */
     public PreparedStatement prepareStatement(String sql, String tableName) throws SQLException {
         StringBuilder sqlBuf = new StringBuilder(sql);
@@ -630,7 +747,7 @@ public class Database {
             else
                 remoteTable = new ExplicitRemoteTable(this, remoteSchema, remoteTableName, baseSchema);
 
-            logger.debug("Adding remote table " + fullName);
+            logger.fine("Adding remote table " + fullName);
             remoteTable.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
             remoteTables.put(fullName, remoteTable);
         }
@@ -771,9 +888,10 @@ public class Database {
      * Replaces named parameters in <code>sql</code> with question marks and
      * returns appropriate matching values in the returned <code>List</code> of <code>String</code>s.
      *
-     * @param sql       StringBuffer input SQL with named parameters, output named params are replaced with ?'s.
+     * @param sql StringBuffer input SQL with named parameters, output named params are replaced with ?'s.
      * @param tableName String
      * @return List of Strings
+     *
      * @see #prepareStatement(String, String)
      */
     private List<String> getSqlParams(StringBuilder sql, String tableName) {
@@ -868,111 +986,7 @@ public class Database {
         Pattern excludeIndirectColumns = Config.getInstance().getIndirectColumnExclusions();
 
         for (Table table : tables.values()) {
-            try{
-                table.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
-            }catch (Exception e){
-                logger.error("Exception for table " + table.getName(),e);
-            }
-        }
-    }
-
-    /**
-     * "macro" to validate that a table is somewhat valid
-     */
-    class NameValidator {
-        private final String clazz;
-        private final Pattern include;
-        private final Pattern exclude;
-        private final Set<String> validTypes;
-
-        /**
-         * @param clazz      table or view
-         * @param include
-         * @param exclude
-         * @param verbose
-         * @param validTypes
-         */
-        NameValidator(String clazz, Pattern include, Pattern exclude, String[] validTypes) {
-            this.clazz = clazz;
-            this.include = include;
-            this.exclude = exclude;
-            this.validTypes = new HashSet<String>();
-            for (String type : validTypes) {
-                this.validTypes.add(type.toUpperCase());
-            }
-        }
-
-        /**
-         * Returns <code>true</code> if the table/view name is deemed "valid"
-         *
-         * @param name name of the table or view
-         * @param type type as returned by metadata.getTables():TABLE_TYPE
-         * @return
-         */
-        boolean isValid(String name, String type) {
-            // some databases (MySQL) return more than we wanted
-            if (!validTypes.contains(type.toUpperCase()))
-                return false;
-
-            // Oracle 10g introduced problematic flashback tables
-            // with bizarre illegal names
-            if (name.indexOf("$") != -1) {
-                if (fineEnabled) {
-                    logger.debug("Excluding " + clazz + " " + name +
-                            ": embedded $ implies illegal name");
-                }
-                return false;
-            }
-
-            if (exclude.matcher(name).matches()) {
-                if (fineEnabled) {
-                    logger.debug("Excluding " + clazz + " " + name +
-                            ": matches exclusion pattern \"" + exclude + '"');
-                }
-                return false;
-            }
-
-            boolean valid = include.matcher(name).matches();
-            if (fineEnabled) {
-                if (valid) {
-                    logger.debug("Including " + clazz + " " + name +
-                            ": matches inclusion pattern \"" + include + '"');
-                } else {
-                    logger.debug("Excluding " + clazz + " " + name +
-                            ": doesn't match inclusion pattern \"" + include + '"');
-                }
-            }
-            return valid;
-        }
-    }
-
-    /**
-     * Collection of fundamental table/view metadata
-     */
-    private class BasicTableMeta {
-        @SuppressWarnings("hiding")
-        final String schema;
-        final String name;
-        final String type;
-        final String remarks;
-        final String viewSql;
-        final int numRows;  // -1 if not determined
-
-        /**
-         * @param schema
-         * @param name
-         * @param type    typically "TABLE" or "VIEW"
-         * @param remarks
-         * @param text    optional textual SQL used to create the view
-         * @param numRows number of rows, or -1 if not determined
-         */
-        BasicTableMeta(String schema, String name, String type, String remarks, String text, int numRows) {
-            this.schema = schema;
-            this.name = name;
-            this.type = type;
-            this.remarks = remarks;
-            viewSql = text;
-            this.numRows = numRows;
+            table.connectForeignKeys(tables, excludeIndirectColumns, excludeColumns);
         }
     }
 
@@ -1000,8 +1014,8 @@ public class Database {
                 tables.put(table.getName(), table);
             }
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("Found details of table " + table.getName());
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine("Found details of table " + table.getName());
             } else {
                 System.out.print('.');
             }

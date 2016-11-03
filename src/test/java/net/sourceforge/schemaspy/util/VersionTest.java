@@ -16,12 +16,13 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
-package net.sourceforge.schemaspy.util;
-
-import junit.framework.TestCase;
+package test.net.sourceforge.schemaspy.util;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import junit.framework.TestCase;
+import net.sourceforge.schemaspy.util.Version;
 
 /**
  * @author John Currier

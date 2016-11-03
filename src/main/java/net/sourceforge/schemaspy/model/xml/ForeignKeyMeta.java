@@ -18,11 +18,9 @@
  */
 package net.sourceforge.schemaspy.model.xml;
 
-import lombok.extern.slf4j.Slf4j;
+import java.util.logging.Logger;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
-
-
 
 /**
  * Additional metadata about a foreign key relationship as expressed in XML
@@ -30,11 +28,11 @@ import org.w3c.dom.Node;
  *
  * @author John Currier
  */
-@Slf4j
 public class ForeignKeyMeta {
     private final String tableName;
     private final String columnName;
     private final String remoteSchema;
+    private final static Logger logger = Logger.getLogger(ForeignKeyMeta.class.getName());
 
     ForeignKeyMeta(Node foreignKeyNode) {
         NamedNodeMap attribs = foreignKeyNode.getAttributes();
@@ -53,7 +51,7 @@ public class ForeignKeyMeta {
             remoteSchema = null;
         }
 
-        logger.trace("Found XML FK metadata for " + tableName + "." + columnName +
+        logger.finer("Found XML FK metadata for " + tableName + "." + columnName +
                 " remoteSchema: " + remoteSchema);
     }
 

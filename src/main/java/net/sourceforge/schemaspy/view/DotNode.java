@@ -18,15 +18,14 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.model.Table;
-import net.sourceforge.schemaspy.model.TableColumn;
-import net.sourceforge.schemaspy.model.TableIndex;
-
 import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
+import net.sourceforge.schemaspy.model.TableIndex;
 
 public class DotNode {
     private final Table table;
@@ -42,7 +41,7 @@ public class DotNode {
      * of those columns.
      *
      * @param table Table
-     * @param path  String
+     * @param path String
      */
     public DotNode(Table table, String path) {
         this(table, path, new DotNodeConfig(true, true));
@@ -58,36 +57,12 @@ public class DotNode {
      * Create a DotNode and specify whether it displays its columns.
      * The details of the optional columns (e.g. type, size) are not displayed.
      *
-     * @param table       Table
+     * @param table Table
      * @param showColumns boolean
-     * @param path        String
+     * @param path String
      */
     public DotNode(Table table, boolean showColumns, String path) {
         this(table, path, showColumns ? new DotNodeConfig(true, false) : new DotNodeConfig());
-    }
-
-    /**
-     * Translates specified string to Numeric Character Reference (NCR).
-     * This (hopefully) allows Unicode languages to be displayed correctly.<p>
-     * The basis for this code was found
-     * <a href='http://d.hatena.ne.jp/etherealmaro/20060806#1154886500'>here</a>.
-     *
-     * @param str
-     * @return
-     */
-    private static String toNCR(String str) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < str.length(); ++i) {
-            char ch = str.charAt(i);
-            if (ch <= 127) {    // don't confuse things unless necessary
-                result.append(ch);
-            } else {
-                result.append("&#");
-                result.append(Integer.parseInt(Integer.toHexString(ch), 16));
-                result.append(";");
-            }
-        }
-        return result.toString();
     }
 
     public void setShowImplied(boolean showImplied) {
@@ -202,10 +177,34 @@ public class DotNode {
         return buf.toString();
     }
 
+    /**
+     * Translates specified string to Numeric Character Reference (NCR).
+     * This (hopefully) allows Unicode languages to be displayed correctly.<p>
+     * The basis for this code was found
+     * <a href='http://d.hatena.ne.jp/etherealmaro/20060806#1154886500'>here</a>.
+     *
+     * @param str
+     * @return
+     */
+    private static String toNCR(String str) {
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < str.length(); ++i) {
+            char ch = str.charAt(i);
+            if (ch <= 127) {    // don't confuse things unless necessary
+                result.append(ch);
+            } else {
+                result.append("&#");
+                result.append(Integer.parseInt(Integer.toHexString(ch), 16));
+                result.append(";");
+            }
+        }
+        return result.toString();
+    }
+
     public static class DotNodeConfig {
         private final boolean showColumns;
-        private final boolean showColumnDetails;
         private boolean showTrivialColumns;
+        private final boolean showColumnDetails;
         private boolean showImpliedRelationships;
 
         /**

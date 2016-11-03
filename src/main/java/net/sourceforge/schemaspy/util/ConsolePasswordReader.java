@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
 /**
  * Implementation of {@link PasswordReader} that takes advantage of the
  * built-in password reading abilities of Java6 (or higher).
- * <p/>
+ *
  * Use {@link PasswordReader#getInstance()} to get an instance of
  * PasswordReader that's appropriate for your JVM
  * (this one requires a Java6 or higher JVM).

@@ -18,13 +18,17 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.sql.DatabaseMetaData;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.util.CaseInsensitiveMap;
 import net.sourceforge.schemaspy.util.HtmlEncoder;
-
-import java.sql.DatabaseMetaData;
-import java.util.*;
 
 /**
  * Default implementation of {@link SqlFormatter}
@@ -32,15 +36,15 @@ import java.util.*;
  * @author John Currier
  */
 public class DefaultSqlFormatter implements SqlFormatter {
-    private static String TOKENS = " \t\n\r\f()<>|,";
     private Set<String> keywords;
     private Map<String, Table> tablesByPossibleNames;
+    private static String TOKENS = " \t\n\r\f()<>|,";
 
     /**
      * Return a HTML-formatted representation of the specified SQL.
      *
      * @param sql SQL to be formatted
-     * @param db  Database
+     * @param db Database
      * @return HTML-formatted representation of the specified SQL
      */
     public String format(String sql, Database db, Set<Table> references) {

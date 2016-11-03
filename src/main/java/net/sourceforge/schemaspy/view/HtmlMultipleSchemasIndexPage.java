@@ -18,15 +18,15 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.util.LineWriter;
-
 import java.io.IOException;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.util.LineWriter;
 
 /**
  * The page that contains links to the various schemas that were analyzed

@@ -27,26 +27,26 @@ import java.util.List;
 public class TableIndex implements Comparable<TableIndex> {
     private final String name;
     private final boolean isUnique;
-    private final List<TableColumn> columns = new ArrayList<TableColumn>();
-    private final List<Boolean> columnsAscending = new ArrayList<Boolean>(); // for whether colums are ascending order
     private Object id;
     private boolean isPrimary;
+    private final List<TableColumn> columns = new ArrayList<TableColumn>();
+    private final List<Boolean> columnsAscending = new ArrayList<Boolean>(); // for whether colums are ascending order
 
     /**
      * @param rs
-     * @throws SQLException
+     * @throws java.sql.SQLException
      */
     public TableIndex(ResultSet rs) throws SQLException {
         name = rs.getString("INDEX_NAME");
         isUnique = !rs.getBoolean("NON_UNIQUE");
     }
 
-    public Object getId() {
-        return id;
-    }
-
     public void setId(Object id) {
         this.id = id;
+    }
+
+    public Object getId() {
+        return id;
     }
 
     public String getName() {

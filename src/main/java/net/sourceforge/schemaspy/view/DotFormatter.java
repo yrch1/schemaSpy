@@ -18,6 +18,16 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.Revision;
 import net.sourceforge.schemaspy.model.Database;
@@ -27,9 +37,6 @@ import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.util.Dot;
 import net.sourceforge.schemaspy.util.LineWriter;
 import net.sourceforge.schemaspy.view.DotNode.DotNodeConfig;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Format table data into .dot format to feed to Graphvis' dot program.

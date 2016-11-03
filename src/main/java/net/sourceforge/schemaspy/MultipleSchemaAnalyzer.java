@@ -18,29 +18,33 @@
  */
 package net.sourceforge.schemaspy;
 
-import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.schemaspy.model.ProcessExecutionException;
-import net.sourceforge.schemaspy.util.LineWriter;
-import net.sourceforge.schemaspy.view.HtmlMultipleSchemasIndexPage;
-
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.io.Reader;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
+
+import net.sourceforge.schemaspy.model.ProcessExecutionException;
+import net.sourceforge.schemaspy.util.LineWriter;
+import net.sourceforge.schemaspy.view.HtmlMultipleSchemasIndexPage;
 
 /**
  * @author John Currier
  */
-@Slf4j
 public final class MultipleSchemaAnalyzer {
     private static MultipleSchemaAnalyzer instance = new MultipleSchemaAnalyzer();
-
-    private final boolean fineEnabled = logger.isTraceEnabled();
+    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final boolean fineEnabled = logger.isLoggable(Level.FINE);
 
     private MultipleSchemaAnalyzer() {
     }
@@ -56,7 +60,7 @@ public final class MultipleSchemaAnalyzer {
         genericCommand.add("-Doneofmultipleschemas=true");
         if (new File(loadedFrom).isDirectory()) {
             genericCommand.add("-cp");
-            genericCommand.add(System.getProperty("java.class.path"));
+            genericCommand.add(loadedFrom);
             genericCommand.add(Main.class.getName());
         } else {
             genericCommand.add("-jar");
@@ -95,7 +99,7 @@ public final class MultipleSchemaAnalyzer {
             command.add(schema);
             command.add("-o");
             command.add(new File(outputDir, schema).toString());
-            logger.debug("Analyzing " + schema);
+            System.out.println("Analyzing " + schema);
             System.out.flush();
             Process java = Runtime.getRuntime().exec(command.toArray(new String[]{}));
             new ProcessOutputReader(java.getInputStream(), System.out).start();
@@ -146,13 +150,13 @@ public final class MultipleSchemaAnalyzer {
                 String schema = iter.next();
                 if (!schemaRegex.matcher(schema).matches()) {
                     if (fineEnabled) {
-                        logger.debug("Excluding schema " + schema +
+                        logger.fine("Excluding schema " + schema +
                                 ": doesn't match + \"" + schemaRegex + '"');
                     }
                     iter.remove(); // remove those that we're not supposed to analyze
                 } else {
                     if (fineEnabled) {
-                        logger.debug("Including schema " + schema +
+                        logger.fine("Including schema " + schema +
                                 ": matches + \"" + schemaRegex + '"');
                     }
                 }

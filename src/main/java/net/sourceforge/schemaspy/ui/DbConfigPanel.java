@@ -18,26 +18,30 @@
  */
 package net.sourceforge.schemaspy.ui;
 
-import net.sourceforge.schemaspy.util.DbSpecificConfig;
-
-import javax.swing.*;
+import java.awt.BorderLayout;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.io.File;
+import javax.swing.JComboBox;
+import javax.swing.JComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.io.File;
+
+import net.sourceforge.schemaspy.util.DbSpecificConfig;
 
 /**
  * @author John Currier
  */
 public class DbConfigPanel extends JPanel {
     private static final long serialVersionUID = 1L;
-    private final DbConfigTableModel model = new DbConfigTableModel();
     private JComboBox databaseTypeSelector;
+    private final DbConfigTableModel model = new DbConfigTableModel();
     private JTable table;
 
     public DbConfigPanel() {

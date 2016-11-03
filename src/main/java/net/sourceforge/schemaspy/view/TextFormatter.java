@@ -18,11 +18,11 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.model.Table;
-import net.sourceforge.schemaspy.util.LineWriter;
-
 import java.io.IOException;
 import java.util.Collection;
+
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.util.LineWriter;
 
 public class TextFormatter {
     private static TextFormatter instance = new TextFormatter();

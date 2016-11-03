@@ -18,19 +18,33 @@
  */
 package net.sourceforge.schemaspy;
 
-import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.schemaspy.model.*;
-import net.sourceforge.schemaspy.util.Inflection;
-
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
-
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
-@Slf4j
+
+import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.ImpliedForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.RailsForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
+import net.sourceforge.schemaspy.model.TableIndex;
+import net.sourceforge.schemaspy.util.Inflection;
+
 public class DbAnalyzer {
     public static List<ImpliedForeignKeyConstraint> getImpliedConstraints(Collection<Table> tables) {
         List<TableColumn> columnsWithoutParents = new ArrayList<TableColumn>();
@@ -94,12 +108,12 @@ public class DbAnalyzer {
      * Ruby on Rails-based databases typically have no real referential integrity
      * constraints.  Instead they have a somewhat unusual way of associating
      * columns to primary keys.<p>
-     * <p/>
+     *
      * Basically all tables have a primary key named <code>ID</code>.
      * All tables are named plural names.
      * The columns that logically reference that <code>ID</code> are the singular
      * form of the table name suffixed with <code>_ID</code>.<p>
-     * <p/>
+     *
      * A side-effect of calling this method is that the returned collection of
      * constraints will be "tied into" the associated tables.
      *
@@ -330,7 +344,8 @@ public class DbAnalyzer {
     public static List<String> getPopulatedSchemas(DatabaseMetaData meta, String schemaSpec) throws SQLException {
         Set<String> schemas = new TreeSet<String>(); // alpha sorted
         Pattern schemaRegex = Pattern.compile(schemaSpec);
-        boolean logging = logger.isDebugEnabled();
+        Logger logger = Logger.getLogger(DbAnalyzer.class.getName());
+        boolean logging = logger.isLoggable(Level.FINE);
 
         Iterator<String> iter = getSchemas(meta).iterator();
         while (iter.hasNext()) {
@@ -341,12 +356,12 @@ public class DbAnalyzer {
                     rs = meta.getTables(null, schema, "%", null);
                     if (rs.next()) {
                         if (logging)
-                            logger.debug("Including schema " + schema +
+                            logger.fine("Including schema " + schema +
                                     ": matches + \"" + schemaRegex + "\" and contains tables");
                         schemas.add(schema);
                     } else {
                         if (logging)
-                            logger.debug("Excluding schema " + schema +
+                            logger.fine("Excluding schema " + schema +
                                     ": matches \"" + schemaRegex + "\" but contains no tables");
                     }
                 } catch (SQLException ignore) {
@@ -356,7 +371,7 @@ public class DbAnalyzer {
                 }
             } else {
                 if (logging)
-                    logger.debug("Excluding schema " + schema +
+                    logger.fine("Excluding schema " + schema +
                             ": doesn't match \"" + schemaRegex + '"');
             }
         }
@@ -366,7 +381,6 @@ public class DbAnalyzer {
 
     /**
      * For debugging/analyzing result sets
-     *
      * @param rs ResultSet
      * @throws SQLException
      */

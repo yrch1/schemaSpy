@@ -18,12 +18,11 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.File;
+import java.io.IOException;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.util.Dot;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.File;
-import java.io.IOException;
 
 public class HtmlTableDiagrammer extends HtmlDiagramFormatter {
     private static HtmlTableDiagrammer instance = new HtmlTableDiagrammer();

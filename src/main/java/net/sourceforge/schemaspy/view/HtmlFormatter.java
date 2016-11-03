@@ -18,6 +18,10 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import net.sourceforge.schemaspy.Config;
 import net.sourceforge.schemaspy.Revision;
 import net.sourceforge.schemaspy.model.Database;
@@ -26,11 +30,6 @@ import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.util.Dot;
 import net.sourceforge.schemaspy.util.HtmlEncoder;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class HtmlFormatter {
     protected final boolean encodeComments = Config.getInstance().isEncodeCommentsEnabled();

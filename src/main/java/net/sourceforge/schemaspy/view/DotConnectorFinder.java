@@ -18,12 +18,12 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.model.Table;
-import net.sourceforge.schemaspy.model.TableColumn;
-
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
 
 /**
  * Format table data into .dot format to feed to Graphvis' dot program.
@@ -44,9 +44,10 @@ public class DotConnectorFinder {
     }
 
     /**
+     *
      * @param table Table
-     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      * @throws IOException
+     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      */
     public Set<DotConnector> getRelatedConnectors(Table table, boolean includeImplied) {
         Set<DotConnector> relationships = new HashSet<DotConnector>();
@@ -63,8 +64,8 @@ public class DotConnectorFinder {
      *
      * @param table1 Table
      * @param table2 Table
-     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      * @throws IOException
+     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      */
     public Set<DotConnector> getRelatedConnectors(Table table1, Table table2, boolean includeExcluded, boolean includeImplied) {
         Set<DotConnector> relationships = new HashSet<DotConnector>();
@@ -81,10 +82,10 @@ public class DotConnectorFinder {
     }
 
     /**
-     * @param column      TableColumn
+     * @param column TableColumn
      * @param targetTable Table
-     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      * @throws IOException
+     * @return Set of <code>dot</code> relationships (as {@link DotConnector}s)
      */
     private Set<DotConnector> getRelatedConnectors(TableColumn column, Table targetTable, boolean includeExcluded, boolean includeImplied) {
         Set<DotConnector> relatedConnectors = new HashSet<DotConnector>();

@@ -18,6 +18,14 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import net.sourceforge.schemaspy.DbAnalyzer;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
@@ -25,9 +33,6 @@ import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.util.HtmlEncoder;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * The page that lists all of the constraints in the schema
@@ -75,7 +80,7 @@ public class HtmlConstraintsPage extends HtmlFormatter {
      * Write specified foreign key constraints
      *
      * @param constraints List
-     * @param html        LineWriter
+     * @param html LineWriter
      * @throws IOException
      */
     private void writeForeignKeyConstraints(List<ForeignKeyConstraint> constraints, LineWriter html) throws IOException {
@@ -125,7 +130,7 @@ public class HtmlConstraintsPage extends HtmlFormatter {
      * Write specified foreign key constraint
      *
      * @param constraint ForeignKeyConstraint
-     * @param html       LineWriter
+     * @param html LineWriter
      * @throws IOException
      */
     private void writeForeignKeyConstraint(ForeignKeyConstraint constraint, LineWriter html) throws IOException {
@@ -177,7 +182,7 @@ public class HtmlConstraintsPage extends HtmlFormatter {
      * Write check constraints associated with the specified tables
      *
      * @param tables Collection
-     * @param html   LineWriter
+     * @param html LineWriter
      * @throws IOException
      */
     public void writeCheckConstraints(Collection<Table> tables, LineWriter html) throws IOException {
@@ -219,9 +224,9 @@ public class HtmlConstraintsPage extends HtmlFormatter {
      * Write check constraints associated with the specified table (if any)
      *
      * @param table Table
-     * @param html  LineWriter
-     * @return int
+     * @param html LineWriter
      * @throws IOException
+     * @return int
      */
     private int writeCheckConstraints(Table table, LineWriter html) throws IOException {
         Map<String, String> constraints = table.getCheckConstraints();  // constraint name -> text pairs

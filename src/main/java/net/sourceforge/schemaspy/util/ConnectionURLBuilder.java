@@ -18,22 +18,20 @@
  */
 package net.sourceforge.schemaspy.util;
 
-import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.schemaspy.Config;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.logging.Logger;
 
+import net.sourceforge.schemaspy.Config;
 
 /**
  * @author John Currier
  */
-@Slf4j
 public class ConnectionURLBuilder {
     private final String connectionURL;
     private final List<DbSpecificOption> options;
-
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     /**
      * @param config
@@ -62,7 +60,7 @@ public class ConnectionURLBuilder {
             }
         }
 
-        logger.info("connectionURL: " + connectionURL);
+        logger.config("connectionURL: " + connectionURL);
     }
 
     private String buildUrl(List<String> args, Properties properties, Config config) {

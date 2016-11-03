@@ -32,8 +32,11 @@ import java.util.logging.LogRecord;
  * @author John Currier
  */
 public class LogFormatter extends Formatter {
+    private final String lineSeparator = System.getProperty("line.separator");
+    private final int MAX_LEVEL_LEN = 7;
     private static final String formatSpec = "HH:mm:ss.";
     private static final long serialVersionUID = 1L;
+
     /**
      * Date formatter for time-to-text translation.
      * These are very expensive to create and not thread-safe, so do it once per thread.
@@ -45,8 +48,9 @@ public class LogFormatter extends Formatter {
             return formatter;
         }
     };
+
     /**
-     * Optimization to keep from creating a new {@link Date} for every call to
+     * Optimization to keep from creating a new {@link java.util.Date} for every call to
      * {@link #toString()}.
      */
     private static final ThreadLocal<Date> date = new ThreadLocal<Date>() {
@@ -55,13 +59,12 @@ public class LogFormatter extends Formatter {
             return new Date();
         }
     };
-    private final String lineSeparator = System.getProperty("line.separator");
-    private final int MAX_LEVEL_LEN = 7;
 
     /**
      * Format the given LogRecord.
      *
-     * @param record the log record to be formatted.
+     * @param record
+     *            the log record to be formatted.
      * @return a formatted log record
      */
     @Override

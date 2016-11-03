@@ -18,142 +18,68 @@
  */
 package net.sourceforge.schemaspy;
 
-import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.schemaspy.model.*;
-import net.sourceforge.schemaspy.model.xml.SchemaMeta;
-import net.sourceforge.schemaspy.util.*;
-import net.sourceforge.schemaspy.view.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Driver;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
+import net.sourceforge.schemaspy.model.ConnectionFailure;
+import net.sourceforge.schemaspy.model.Database;
+import net.sourceforge.schemaspy.model.EmptySchemaException;
+import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.ImpliedForeignKeyConstraint;
+import net.sourceforge.schemaspy.model.InvalidConfigurationException;
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
+import net.sourceforge.schemaspy.model.xml.SchemaMeta;
+import net.sourceforge.schemaspy.util.ConnectionURLBuilder;
+import net.sourceforge.schemaspy.util.DOMUtil;
+import net.sourceforge.schemaspy.util.DbSpecificOption;
+import net.sourceforge.schemaspy.util.Dot;
+import net.sourceforge.schemaspy.util.LineWriter;
+import net.sourceforge.schemaspy.util.LogFormatter;
+import net.sourceforge.schemaspy.util.PasswordReader;
+import net.sourceforge.schemaspy.util.ResourceWriter;
+import net.sourceforge.schemaspy.view.DotFormatter;
+import net.sourceforge.schemaspy.view.HtmlAnomaliesPage;
+import net.sourceforge.schemaspy.view.HtmlColumnsPage;
+import net.sourceforge.schemaspy.view.HtmlConstraintsPage;
+import net.sourceforge.schemaspy.view.HtmlMainIndexPage;
+import net.sourceforge.schemaspy.view.HtmlOrphansPage;
+import net.sourceforge.schemaspy.view.HtmlRelationshipsPage;
+import net.sourceforge.schemaspy.view.HtmlTablePage;
+import net.sourceforge.schemaspy.view.ImageWriter;
+import net.sourceforge.schemaspy.view.StyleSheet;
+import net.sourceforge.schemaspy.view.TextFormatter;
+import net.sourceforge.schemaspy.view.WriteStats;
+import net.sourceforge.schemaspy.view.XmlTableFormatter;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 
 /**
  * @author John Currier
  */
-@Slf4j
 public class SchemaAnalyzer {
-
+    private final Logger logger = Logger.getLogger(getClass().getName());
     private boolean fineEnabled;
-
-    /**
-     * dumpNoDataMessage
-     *
-     * @param schema String
-     * @param user   String
-     * @param meta   DatabaseMetaData
-     */
-    private static void dumpNoTablesMessage(String schema, String user, DatabaseMetaData meta, boolean specifiedInclusions) throws SQLException {
-        System.out.println();
-        System.out.println();
-        System.out.println("No tables or views were found in schema '" + schema + "'.");
-        List<String> schemas = DbAnalyzer.getSchemas(meta);
-        if (schema == null || schemas.contains(schema)) {
-            System.out.println("The schema exists in the database, but the user you specified (" + user + ')');
-            System.out.println("  might not have rights to read its contents.");
-            if (specifiedInclusions) {
-                System.out.println("Another possibility is that the regular expression that you specified");
-                System.out.println("  for what to include (via -i) didn't match any tables.");
-            }
-        } else {
-            System.out.println("The schema does not exist in the database.");
-            System.out.println("Make sure that you specify a valid schema with the -s option and that");
-            System.out.println("  the user specified (" + user + ") can read from the schema.");
-            System.out.println("Note that schema names are usually case sensitive.");
-        }
-        System.out.println();
-        boolean plural = schemas.size() != 1;
-        System.out.println(schemas.size() + " schema" + (plural ? "s" : "") + " exist" + (plural ? "" : "s") + " in this database.");
-        System.out.println("Some of these \"schemas\" may be users or system schemas.");
-        System.out.println();
-        for (String unknown : schemas) {
-            System.out.print(unknown + " ");
-        }
-
-        System.out.println();
-        List<String> populatedSchemas = DbAnalyzer.getPopulatedSchemas(meta);
-        if (populatedSchemas.isEmpty()) {
-            System.out.println("Unable to determine if any of the schemas contain tables/views");
-        } else {
-            System.out.println("These schemas contain tables/views that user '" + user + "' can see:");
-            System.out.println();
-            for (String populated : populatedSchemas) {
-                System.out.print(" " + populated);
-            }
-        }
-    }
-
-    /**
-     * Currently very DB2-specific
-     *
-     * @param recursiveConstraints List
-     * @param schema               String
-     * @param out                  LineWriter
-     * @throws IOException
-     */
-    /* we'll eventually want to put this functionality back in with a
-     * database independent implementation
-    private static void writeRestoreRecursiveConstraintsSql(List recursiveConstraints, String schema, LineWriter out) throws IOException {
-        Map ruleTextMapping = new HashMap();
-        ruleTextMapping.put(new Character('C'), "CASCADE");
-        ruleTextMapping.put(new Character('A'), "NO ACTION");
-        ruleTextMapping.put(new Character('N'), "NO ACTION"); // Oracle
-        ruleTextMapping.put(new Character('R'), "RESTRICT");
-        ruleTextMapping.put(new Character('S'), "SET NULL");  // Oracle
-
-        for (Iterator iter = recursiveConstraints.iterator(); iter.hasNext(); ) {
-            ForeignKeyConstraint constraint = (ForeignKeyConstraint)iter.next();
-            out.write("ALTER TABLE \"" + schema + "\".\"" + constraint.getChildTable() + "\" ADD CONSTRAINT \"" + constraint.getName() + "\"");
-            StringBuffer buf = new StringBuffer();
-            for (Iterator columnIter = constraint.getChildColumns().iterator(); columnIter.hasNext(); ) {
-                buf.append("\"");
-                buf.append(columnIter.next());
-                buf.append("\"");
-                if (columnIter.hasNext())
-                    buf.append(",");
-            }
-            out.write(" FOREIGN KEY (" + buf.toString() + ")");
-            out.write(" REFERENCES \"" + schema + "\".\"" + constraint.getParentTable() + "\"");
-            buf = new StringBuffer();
-            for (Iterator columnIter = constraint.getParentColumns().iterator(); columnIter.hasNext(); ) {
-                buf.append("\"");
-                buf.append(columnIter.next());
-                buf.append("\"");
-                if (columnIter.hasNext())
-                    buf.append(",");
-            }
-            out.write(" (" + buf.toString() + ")");
-            out.write(" ON DELETE ");
-            out.write(ruleTextMapping.get(new Character(constraint.getDeleteRule())).toString());
-            out.write(" ON UPDATE ");
-            out.write(ruleTextMapping.get(new Character(constraint.getUpdateRule())).toString());
-            out.writeln(";");
-        }
-    }
-    */
-    private static void yankParam(List<String> args, String paramId) {
-        int paramIndex = args.indexOf(paramId);
-        if (paramIndex >= 0) {
-            args.remove(paramIndex);
-            args.remove(paramIndex);
-        }
-    }
 
     public Database analyze(Config config) throws Exception {
         try {
@@ -167,7 +93,18 @@ public class SchemaAnalyzer {
                 return null;
             }
 
-            fineEnabled = logger.isDebugEnabled();
+            // set the log level for the root logger
+            Logger.getLogger("").setLevel(config.getLogLevel());
+
+            // clean-up console output a bit
+            for (Handler handler : Logger.getLogger("").getHandlers()) {
+                if (handler instanceof ConsoleHandler) {
+                    ((ConsoleHandler) handler).setFormatter(new LogFormatter());
+                    handler.setLevel(config.getLogLevel());
+                }
+            }
+
+            fineEnabled = logger.isLoggable(Level.FINE);
             logger.info("Starting schema analysis");
 
             long start = System.currentTimeMillis();
@@ -208,7 +145,7 @@ public class SchemaAnalyzer {
                 StringBuilder msg = new StringBuilder("Unrecognized option(s):");
                 for (String remnant : config.getRemainingParameters())
                     msg.append(" " + remnant);
-                logger.warn(msg.toString());
+                logger.warning(msg.toString());
             }
 
             String driverClass = properties.getProperty("driver");
@@ -436,7 +373,7 @@ public class SchemaAnalyzer {
                     if (!fineEnabled)
                         System.out.print('.');
                     else
-                        logger.debug("Writing details of " + table.getName());
+                        logger.fine("Writing details of " + table.getName());
 
                     out = new LineWriter(new File(outputDir, "tables/" + table.getName() + ".html"), 24 * 1024, config.getCharset());
                     tableFormatter.write(db, table, hasOrphans, outputDir, stats, out);
@@ -519,7 +456,7 @@ public class SchemaAnalyzer {
                     System.out.println("(" + (end - startDiagrammingDetails) / 1000 + "sec)");
                 logger.info("Wrote table details in " + (end - startDiagrammingDetails) / 1000 + " seconds");
 
-                if (logger.isInfoEnabled()) {
+                if (logger.isLoggable(Level.INFO)) {
                     logger.info("Wrote relationship details of " + tables.size() + " tables/views to directory '" + config.getOutputDir() + "' in " + (end - start) / 1000 + " seconds.");
                     logger.info("View the results by opening " + new File(config.getOutputDir(), "index.html"));
                 } else {
@@ -536,34 +473,101 @@ public class SchemaAnalyzer {
     }
 
     /**
-     * Currently very DB2-specific
+     * dumpNoDataMessage
      *
-     * @param recursiveConstraints List
-     * @param schema               String
-     * @param out                  LineWriter
-     * @throws IOException
+     * @param schema String
+     * @param user String
+     * @param meta DatabaseMetaData
      */
-    /* we'll eventually want to put this functionality back in with a
-     * database independent implementation
-    private static void writeRemoveRecursiveConstraintsSql(List recursiveConstraints, String schema, LineWriter out) throws IOException {
-        for (Iterator iter = recursiveConstraints.iterator(); iter.hasNext(); ) {
-            ForeignKeyConstraint constraint = (ForeignKeyConstraint)iter.next();
-            out.writeln("ALTER TABLE " + schema + "." + constraint.getChildTable() + " DROP CONSTRAINT " + constraint.getName() + ";");
+    private static void dumpNoTablesMessage(String schema, String user, DatabaseMetaData meta, boolean specifiedInclusions) throws SQLException {
+        System.out.println();
+        System.out.println();
+        System.out.println("No tables or views were found in schema '" + schema + "'.");
+        List<String> schemas = DbAnalyzer.getSchemas(meta);
+        if (schema == null || schemas.contains(schema)) {
+            System.out.println("The schema exists in the database, but the user you specified (" + user + ')');
+            System.out.println("  might not have rights to read its contents.");
+            if (specifiedInclusions) {
+                System.out.println("Another possibility is that the regular expression that you specified");
+                System.out.println("  for what to include (via -i) didn't match any tables.");
+            }
+        } else {
+            System.out.println("The schema does not exist in the database.");
+            System.out.println("Make sure that you specify a valid schema with the -s option and that");
+            System.out.println("  the user specified (" + user + ") can read from the schema.");
+            System.out.println("Note that schema names are usually case sensitive.");
+        }
+        System.out.println();
+        boolean plural = schemas.size() != 1;
+        System.out.println(schemas.size() + " schema" + (plural ? "s" : "") + " exist" + (plural ? "" : "s") + " in this database.");
+        System.out.println("Some of these \"schemas\" may be users or system schemas.");
+        System.out.println();
+        for (String unknown : schemas) {
+            System.out.print(unknown + " ");
+        }
+
+        System.out.println();
+        List<String> populatedSchemas = DbAnalyzer.getPopulatedSchemas(meta);
+        if (populatedSchemas.isEmpty()) {
+            System.out.println("Unable to determine if any of the schemas contain tables/views");
+        } else {
+            System.out.println("These schemas contain tables/views that user '" + user + "' can see:");
+            System.out.println();
+            for (String populated : populatedSchemas) {
+                System.out.print(" " + populated);
+            }
         }
     }
-    */
+
     private Connection getConnection(Config config, String connectionURL,
                                      String driverClass, String driverPath) throws FileNotFoundException, IOException {
-        if (logger.isInfoEnabled()) {
+        if (logger.isLoggable(Level.INFO)) {
             logger.info("Using database properties:");
             logger.info("  " + config.getDbPropertiesLoadedFrom());
         } else {
             System.out.println("Using database properties:");
             System.out.println("  " + config.getDbPropertiesLoadedFrom());
         }
+
+        List<URL> classpath = new ArrayList<URL>();
+        List<File> invalidClasspathEntries = new ArrayList<File>();
+        StringTokenizer tokenizer = new StringTokenizer(driverPath, File.pathSeparator);
+        while (tokenizer.hasMoreTokens()) {
+            File pathElement = new File(tokenizer.nextToken());
+            if (pathElement.exists())
+                classpath.add(pathElement.toURI().toURL());
+            else
+                invalidClasspathEntries.add(pathElement);
+        }
+
+        URLClassLoader loader = new URLClassLoader(classpath.toArray(new URL[classpath.size()]));
         Driver driver = null;
-        List<URL> classpath = new ArrayList<>();
-        driver = SchemaAnalyzer.getDriver(classpath, driverClass, driverPath);
+        try {
+            driver = (Driver) Class.forName(driverClass, true, loader).newInstance();
+
+            // have to use deprecated method or we won't see messages generated by older drivers
+            //java.sql.DriverManager.setLogStream(System.err);
+        } catch (Exception exc) {
+            System.err.println(exc); // people don't want to see a stack trace...
+            System.err.println();
+            System.err.print("Failed to load driver '" + driverClass + "'");
+            if (classpath.isEmpty())
+                System.err.println();
+            else
+                System.err.println("from: " + classpath);
+            if (!invalidClasspathEntries.isEmpty()) {
+                if (invalidClasspathEntries.size() == 1)
+                    System.err.print("This entry doesn't point to a valid file/directory: ");
+                else
+                    System.err.print("These entries don't point to valid files/directories: ");
+                System.err.println(invalidClasspathEntries);
+            }
+            System.err.println();
+            System.err.println("Use the -dp option to specify the location of the database");
+            System.err.println("drivers for your database (usually in a .jar or .zip/.Z).");
+            System.err.println();
+            throw new ConnectionFailure(exc);
+        }
 
         Properties connectionProperties = config.getConnectionProperties();
         if (config.getUser() != null) {
@@ -610,47 +614,76 @@ public class SchemaAnalyzer {
         return connection;
     }
 
-    public static Driver getDriver(List<URL> classpath, String driverClass, String driverPath) throws MalformedURLException {
-
-        Driver driver = null;
-        List<File> invalidClasspathEntries = new ArrayList<File>();
-        StringTokenizer tokenizer = new StringTokenizer(driverPath, File.pathSeparator);
-        while (tokenizer.hasMoreTokens()) {
-            File pathElement = new File(tokenizer.nextToken());
-            if (pathElement.exists())
-                classpath.add(pathElement.toURI().toURL());
-            else
-                invalidClasspathEntries.add(pathElement);
+    /**
+     * Currently very DB2-specific
+     * @param recursiveConstraints List
+     * @param schema String
+     * @param out LineWriter
+     * @throws IOException
+     */
+    /* we'll eventually want to put this functionality back in with a
+     * database independent implementation
+    private static void writeRemoveRecursiveConstraintsSql(List recursiveConstraints, String schema, LineWriter out) throws IOException {
+        for (Iterator iter = recursiveConstraints.iterator(); iter.hasNext(); ) {
+            ForeignKeyConstraint constraint = (ForeignKeyConstraint)iter.next();
+            out.writeln("ALTER TABLE " + schema + "." + constraint.getChildTable() + " DROP CONSTRAINT " + constraint.getName() + ";");
         }
+    }
+    */
 
-        URLClassLoader loader = new URLClassLoader(classpath.toArray(new URL[classpath.size()]));
+    /**
+     * Currently very DB2-specific
+     *
+     * @param recursiveConstraints List
+     * @param schema               String
+     * @param out                  LineWriter
+     * @throws IOException
+     */
+    /* we'll eventually want to put this functionality back in with a
+     * database independent implementation
+    private static void writeRestoreRecursiveConstraintsSql(List recursiveConstraints, String schema, LineWriter out) throws IOException {
+        Map ruleTextMapping = new HashMap();
+        ruleTextMapping.put(new Character('C'), "CASCADE");
+        ruleTextMapping.put(new Character('A'), "NO ACTION");
+        ruleTextMapping.put(new Character('N'), "NO ACTION"); // Oracle
+        ruleTextMapping.put(new Character('R'), "RESTRICT");
+        ruleTextMapping.put(new Character('S'), "SET NULL");  // Oracle
 
-        try {
-            driver = (Driver) Class.forName(driverClass, true, loader).newInstance();
-
-            // have to use deprecated method or we won't see messages generated by older drivers
-            //java.sql.DriverManager.setLogStream(System.err);
-        } catch (Exception exc) {
-            System.err.println(exc); // people don't want to see a stack trace...
-            System.err.println();
-            System.err.print("Failed to load driver '" + driverClass + "'");
-            if (classpath.isEmpty())
-                System.err.println();
-            else
-                System.err.println("from: " + classpath);
-            if (!invalidClasspathEntries.isEmpty()) {
-                if (invalidClasspathEntries.size() == 1)
-                    System.err.print("This entry doesn't point to a valid file/directory: ");
-                else
-                    System.err.print("These entries don't point to valid files/directories: ");
-                System.err.println(invalidClasspathEntries);
+        for (Iterator iter = recursiveConstraints.iterator(); iter.hasNext(); ) {
+            ForeignKeyConstraint constraint = (ForeignKeyConstraint)iter.next();
+            out.write("ALTER TABLE \"" + schema + "\".\"" + constraint.getChildTable() + "\" ADD CONSTRAINT \"" + constraint.getName() + "\"");
+            StringBuffer buf = new StringBuffer();
+            for (Iterator columnIter = constraint.getChildColumns().iterator(); columnIter.hasNext(); ) {
+                buf.append("\"");
+                buf.append(columnIter.next());
+                buf.append("\"");
+                if (columnIter.hasNext())
+                    buf.append(",");
             }
-            System.err.println();
-            System.err.println("Use the -dp option to specify the location of the database");
-            System.err.println("drivers for your database (usually in a .jar or .zip/.Z).");
-            System.err.println();
-            throw new ConnectionFailure(exc);
+            out.write(" FOREIGN KEY (" + buf.toString() + ")");
+            out.write(" REFERENCES \"" + schema + "\".\"" + constraint.getParentTable() + "\"");
+            buf = new StringBuffer();
+            for (Iterator columnIter = constraint.getParentColumns().iterator(); columnIter.hasNext(); ) {
+                buf.append("\"");
+                buf.append(columnIter.next());
+                buf.append("\"");
+                if (columnIter.hasNext())
+                    buf.append(",");
+            }
+            out.write(" (" + buf.toString() + ")");
+            out.write(" ON DELETE ");
+            out.write(ruleTextMapping.get(new Character(constraint.getDeleteRule())).toString());
+            out.write(" ON UPDATE ");
+            out.write(ruleTextMapping.get(new Character(constraint.getUpdateRule())).toString());
+            out.writeln(";");
         }
-        return driver;
+    }
+    */
+    private static void yankParam(List<String> args, String paramId) {
+        int paramIndex = args.indexOf(paramId);
+        if (paramIndex >= 0) {
+            args.remove(paramIndex);
+            args.remove(paramIndex);
+        }
     }
 }

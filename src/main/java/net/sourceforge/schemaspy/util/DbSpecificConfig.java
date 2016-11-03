@@ -18,14 +18,14 @@
  */
 package net.sourceforge.schemaspy.util;
 
-import net.sourceforge.schemaspy.Config;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+
+import net.sourceforge.schemaspy.Config;
 
 /**
  * Configuration of a specific type of database (as specified by -t)
@@ -34,9 +34,9 @@ import java.util.StringTokenizer;
  */
 public class DbSpecificConfig {
     private final String type;
+    private String description;
     private final List<DbSpecificOption> options = new ArrayList<DbSpecificOption>();
     private final Config config = new Config();
-    private String description;
 
     /**
      * Construct an instance with configuration options of the specified database type

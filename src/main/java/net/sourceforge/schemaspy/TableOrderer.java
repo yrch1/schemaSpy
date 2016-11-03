@@ -18,10 +18,15 @@
  */
 package net.sourceforge.schemaspy;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import net.sourceforge.schemaspy.model.ForeignKeyConstraint;
 import net.sourceforge.schemaspy.model.Table;
-
-import java.util.*;
 
 /**
  * Sorts {@link Table}s by their referential integrity constraints.
@@ -31,6 +36,101 @@ import java.util.*;
  * @author John Currier
  */
 public class TableOrderer {
+    /**
+     * Returns a list of <code>Table</code>s ordered such that parents are listed first
+     * and child tables are listed last.
+     *
+     * <code>recursiveConstraints</code> gets populated with <code>TableConstraint</code>s
+     * that had to be removed to resolve the returned list.
+     * @param recursiveConstraints
+     * @return
+     */
+    public List<Table> getTablesOrderedByRI(Collection<Table> tables, Collection<ForeignKeyConstraint> recursiveConstraints) {
+        List<Table> heads = new ArrayList<Table>();
+        List<Table> tails = new ArrayList<Table>();
+        List<Table> remainingTables = new ArrayList<Table>(tables);
+        List<Table> unattached = new ArrayList<Table>();
+
+        // first pass to gather the 'low hanging fruit'
+        for (Iterator<Table> iter = remainingTables.iterator(); iter.hasNext(); ) {
+            Table table = iter.next();
+            if (table.isRemote()) {
+                // ignore remote tables since there's no way to deal with them
+                table.unlinkParents();
+                table.unlinkChildren();
+                iter.remove();
+            } else if (table.isLeaf() && table.isRoot()) {
+                // floater, so add it to 'unattached'
+                unattached.add(table);
+                iter.remove();
+            }
+        }
+
+        unattached = sortTrimmedLevel(unattached);
+        boolean prunedNonReals = false;
+
+        while (!remainingTables.isEmpty()) {
+            int tablesLeft = remainingTables.size();
+            tails.addAll(0, trimLeaves(remainingTables));
+            heads.addAll(trimRoots(remainingTables));
+
+            // if we could't trim anything then there's recursion....
+            // resolve it by removing a constraint, one by one, 'till the tables are all trimmed
+            if (tablesLeft == remainingTables.size()) {
+                if (!prunedNonReals) {
+                    // get ride of everything that isn't explicitly specified by the database
+                    for (Table table : remainingTables) {
+                        table.removeNonRealForeignKeys();
+                    }
+
+                    prunedNonReals = true;
+                    continue;
+                }
+
+                boolean foundSimpleRecursion = false;
+                for (Table potentialRecursiveTable : remainingTables) {
+                    ForeignKeyConstraint recursiveConstraint = potentialRecursiveTable.removeSelfReferencingConstraint();
+                    if (recursiveConstraint != null) {
+                        recursiveConstraints.add(recursiveConstraint);
+                        foundSimpleRecursion = true;
+                    }
+                }
+
+                if (!foundSimpleRecursion) {
+                    // expensive comparison, but we're down to the end of the tables so it shouldn't really matter
+                    Set<Table> byParentChildDelta = new TreeSet<Table>(new Comparator<Table>() {
+                        // sort on the delta between number of parents and kids so we can
+                        // target the tables with the biggest delta and therefore the most impact
+                        // on reducing the smaller of the two
+                        public int compare(Table table1, Table table2) {
+                            int rc = Math.abs(table2.getNumChildren() - table2.getNumParents()) - Math.abs(table1.getNumChildren() - table1.getNumParents());
+                            if (rc == 0)
+                                rc = table1.compareTo(table2);
+                            return rc;
+                        }
+                    });
+                    byParentChildDelta.addAll(remainingTables);
+                    Table recursiveTable = byParentChildDelta.iterator().next(); // this one has the largest delta
+                    ForeignKeyConstraint removedConstraint = recursiveTable.removeAForeignKeyConstraint();
+                    recursiveConstraints.add(removedConstraint);
+                }
+            }
+        }
+
+        // we've gathered all the heads and tails, so combine them here moving 'unattached' tables to the end
+        List<Table> ordered = new ArrayList<Table>(heads.size() + tails.size());
+
+        ordered.addAll(heads);
+        heads = null; // allow gc ASAP
+
+        ordered.addAll(tails);
+        tails = null; // allow gc ASAP
+
+        ordered.addAll(unattached);
+
+        return ordered;
+    }
+
     /**
      * Remove the root nodes (tables w/o parents)
      *
@@ -119,101 +219,5 @@ public class TableOrderer {
         Set<Table> sorter = new TreeSet<Table>(new TrimComparator());
         sorter.addAll(tables);
         return new ArrayList<Table>(sorter);
-    }
-
-    /**
-     * Returns a list of <code>Table</code>s ordered such that parents are listed first
-     * and child tables are listed last.
-     * <p/>
-     * <code>recursiveConstraints</code> gets populated with <code>TableConstraint</code>s
-     * that had to be removed to resolve the returned list.
-     *
-     * @param recursiveConstraints
-     * @return
-     */
-    public List<Table> getTablesOrderedByRI(Collection<Table> tables, Collection<ForeignKeyConstraint> recursiveConstraints) {
-        List<Table> heads = new ArrayList<Table>();
-        List<Table> tails = new ArrayList<Table>();
-        List<Table> remainingTables = new ArrayList<Table>(tables);
-        List<Table> unattached = new ArrayList<Table>();
-
-        // first pass to gather the 'low hanging fruit'
-        for (Iterator<Table> iter = remainingTables.iterator(); iter.hasNext(); ) {
-            Table table = iter.next();
-            if (table.isRemote()) {
-                // ignore remote tables since there's no way to deal with them
-                table.unlinkParents();
-                table.unlinkChildren();
-                iter.remove();
-            } else if (table.isLeaf() && table.isRoot()) {
-                // floater, so add it to 'unattached'
-                unattached.add(table);
-                iter.remove();
-            }
-        }
-
-        unattached = sortTrimmedLevel(unattached);
-        boolean prunedNonReals = false;
-
-        while (!remainingTables.isEmpty()) {
-            int tablesLeft = remainingTables.size();
-            tails.addAll(0, trimLeaves(remainingTables));
-            heads.addAll(trimRoots(remainingTables));
-
-            // if we could't trim anything then there's recursion....
-            // resolve it by removing a constraint, one by one, 'till the tables are all trimmed
-            if (tablesLeft == remainingTables.size()) {
-                if (!prunedNonReals) {
-                    // get ride of everything that isn't explicitly specified by the database
-                    for (Table table : remainingTables) {
-                        table.removeNonRealForeignKeys();
-                    }
-
-                    prunedNonReals = true;
-                    continue;
-                }
-
-                boolean foundSimpleRecursion = false;
-                for (Table potentialRecursiveTable : remainingTables) {
-                    ForeignKeyConstraint recursiveConstraint = potentialRecursiveTable.removeSelfReferencingConstraint();
-                    if (recursiveConstraint != null) {
-                        recursiveConstraints.add(recursiveConstraint);
-                        foundSimpleRecursion = true;
-                    }
-                }
-
-                if (!foundSimpleRecursion) {
-                    // expensive comparison, but we're down to the end of the tables so it shouldn't really matter
-                    Set<Table> byParentChildDelta = new TreeSet<Table>(new Comparator<Table>() {
-                        // sort on the delta between number of parents and kids so we can
-                        // target the tables with the biggest delta and therefore the most impact
-                        // on reducing the smaller of the two
-                        public int compare(Table table1, Table table2) {
-                            int rc = Math.abs(table2.getNumChildren() - table2.getNumParents()) - Math.abs(table1.getNumChildren() - table1.getNumParents());
-                            if (rc == 0)
-                                rc = table1.compareTo(table2);
-                            return rc;
-                        }
-                    });
-                    byParentChildDelta.addAll(remainingTables);
-                    Table recursiveTable = byParentChildDelta.iterator().next(); // this one has the largest delta
-                    ForeignKeyConstraint removedConstraint = recursiveTable.removeAForeignKeyConstraint();
-                    recursiveConstraints.add(removedConstraint);
-                }
-            }
-        }
-
-        // we've gathered all the heads and tails, so combine them here moving 'unattached' tables to the end
-        List<Table> ordered = new ArrayList<Table>(heads.size() + tails.size());
-
-        ordered.addAll(heads);
-        heads = null; // allow gc ASAP
-
-        ordered.addAll(tails);
-        tails = null; // allow gc ASAP
-
-        ordered.addAll(unattached);
-
-        return ordered;
     }
 }

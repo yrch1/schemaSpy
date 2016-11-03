@@ -18,14 +18,18 @@
  */
 package net.sourceforge.schemaspy.util;
 
-import net.sourceforge.schemaspy.Config;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import net.sourceforge.schemaspy.Config;
 
 public class Dot {
     private static Dot instance = new Dot();
@@ -33,11 +37,11 @@ public class Dot {
     private final Version supportedVersion = new Version("2.2.1");
     private final Version badVersion = new Version("2.4");
     private final String lineSeparator = System.getProperty("line.separator");
-    private final Set<String> validatedRenderers = Collections.synchronizedSet(new HashSet<String>());
-    private final Set<String> invalidatedRenderers = Collections.synchronizedSet(new HashSet<String>());
     private String dotExe;
     private String format = "png";
     private String renderer;
+    private final Set<String> validatedRenderers = Collections.synchronizedSet(new HashSet<String>());
+    private final Set<String> invalidatedRenderers = Collections.synchronizedSet(new HashSet<String>());
 
     private Dot() {
         String versionText = null;
@@ -79,16 +83,6 @@ public class Dot {
         return instance;
     }
 
-    private static String getDisplayableCommand(String[] command) {
-        StringBuilder displayable = new StringBuilder();
-        for (int i = 0; i < command.length; ++i) {
-            displayable.append(command[i]);
-            if (i + 1 < command.length)
-                displayable.append(' ');
-        }
-        return displayable.toString();
-    }
-
     public boolean exists() {
         return version.toString() != null;
     }
@@ -110,14 +104,6 @@ public class Dot {
     }
 
     /**
-     * @return
-     * @see #setFormat(String)
-     */
-    public String getFormat() {
-        return format;
-    }
-
-    /**
      * Set the image format to generate.  Defaults to <code>png</code>.
      * See <a href='http://www.graphviz.org/doc/info/output.html'>http://www.graphviz.org/doc/info/output.html</a>
      * for valid formats.
@@ -129,10 +115,18 @@ public class Dot {
     }
 
     /**
+     * @see #setFormat(String)
+     * @return
+     */
+    public String getFormat() {
+        return format;
+    }
+
+    /**
      * Returns true if the installed dot requires specifying :gd as a renderer.
      * This was added when Win 2.15 came out because it defaulted to Cairo, which produces
      * better quality output, but at a significant speed and size penalty.<p>
-     * <p/>
+     *
      * The intent of this property is to determine if it's ok to tack ":gd" to
      * the format specifier.  Earlier versions didn't require it and didn't know
      * about the option.
@@ -141,11 +135,6 @@ public class Dot {
      */
     public boolean requiresGdRenderer() {
         return getVersion().compareTo(new Version("2.12")) >= 0 && supportsRenderer(":gd");
-    }
-
-    public String getRenderer() {
-        return renderer != null && supportsRenderer(renderer) ? renderer
-                : (requiresGdRenderer() ? ":gd" : "");
     }
 
     /**
@@ -161,11 +150,9 @@ public class Dot {
         this.renderer = renderer;
     }
 
-    /**
-     * @see #setHighQuality(boolean)
-     */
-    public boolean isHighQuality() {
-        return getRenderer().indexOf(":cairo") != -1;
+    public String getRenderer() {
+        return renderer != null && supportsRenderer(renderer) ? renderer
+                : (requiresGdRenderer() ? ":gd" : "");
     }
 
     /**
@@ -182,6 +169,13 @@ public class Dot {
         } else if (supportsRenderer(":gd")) {
             setRenderer(":gd");
         }
+    }
+
+    /**
+     * @see #setHighQuality(boolean)
+     */
+    public boolean isHighQuality() {
+        return getRenderer().indexOf(":cairo") != -1;
     }
 
     /**
@@ -302,6 +296,24 @@ public class Dot {
         }
     }
 
+    public class DotFailure extends IOException {
+        private static final long serialVersionUID = 3833743270181351987L;
+
+        public DotFailure(String msg) {
+            super(msg);
+        }
+    }
+
+    private static String getDisplayableCommand(String[] command) {
+        StringBuilder displayable = new StringBuilder();
+        for (int i = 0; i < command.length; ++i) {
+            displayable.append(command[i]);
+            if (i + 1 < command.length)
+                displayable.append(' ');
+        }
+        return displayable.toString();
+    }
+
     private static class ProcessOutputReader extends Thread {
         private final BufferedReader processReader;
         private final String command;
@@ -330,14 +342,6 @@ public class Dot {
                     exc.printStackTrace(); // shouldn't ever get here...but...
                 }
             }
-        }
-    }
-
-    public class DotFailure extends IOException {
-        private static final long serialVersionUID = 3833743270181351987L;
-
-        public DotFailure(String msg) {
-            super(msg);
         }
     }
 }

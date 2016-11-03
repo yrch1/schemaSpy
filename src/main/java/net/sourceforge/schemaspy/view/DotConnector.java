@@ -41,8 +41,8 @@ public class DotConnector implements Comparable<DotConnector> {
      * Create an edge that logically connects a child column to a parent column.
      *
      * @param parentColumn TableColumn
-     * @param childColumn  TableColumn
-     * @param implied      boolean
+     * @param childColumn TableColumn
+     * @param implied boolean
      */
     public DotConnector(TableColumn parentColumn, TableColumn childColumn, boolean implied) {
         this.parentColumn = parentColumn;
@@ -72,7 +72,7 @@ public class DotConnector implements Comparable<DotConnector> {
     /**
      * By default a parent edge connects to the column name...this lets you
      * connect it the parent's type column instead (e.g. for detailed parents)
-     * <p/>
+     *
      * Yes, I need to find a more appropriate name/metaphor for this method....
      */
     public void connectToParentDetails() {

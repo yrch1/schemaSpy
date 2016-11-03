@@ -18,15 +18,16 @@
  */
 package net.sourceforge.schemaspy.ui;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.util.DbSpecificConfig;
-
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
+import javax.swing.AbstractListModel;
+import javax.swing.ComboBoxModel;
+
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.util.DbSpecificConfig;
 
 /**
  * @author John Currier

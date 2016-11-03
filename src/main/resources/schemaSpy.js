@@ -29,7 +29,7 @@ function unsync(cb, target) {
 function associate(cb, target) {
     sync(cb, target);
     cb.click(function () {
-        sync(cb, target);
+    sync(cb, target);
     });
 }
 
@@ -42,7 +42,7 @@ function syncImage() {
     if (table) {
         if (implied && $('#impliedTwoDegreesImg').size() > 0) {
             $('#impliedTwoDegreesImg').show();
-        } else {
+    } else {
             var oneDegree = $('#oneDegree').attr('checked');
 
             if (oneDegree || $('#twoDegreesImg').size() == 0) {
@@ -50,7 +50,7 @@ function syncImage() {
             } else {
                 $('#twoDegreesImg').show();
             }
-        }
+    }
     } else {
         var showNonKeys = $('#showNonKeys').attr('checked');
 
@@ -82,16 +82,16 @@ $(function () {
 
     syncImage();
     $('#implied,#oneDegree,#twoDegrees,#showNonKeys').click(function () {
-        syncImage();
+    syncImage();
     });
 
     unsync($('#implied'), $('.degrees'));
     $('#implied').click(function () {
-        unsync($('#implied'), $('.degrees'));
+    unsync($('#implied'), $('.degrees'));
     });
 
     unsync($('#removeImpliedOrphans'), $('.impliedNotOrphan'));
     $('#removeImpliedOrphans').click(function () {
-        unsync($('#removeImpliedOrphans'), $('.impliedNotOrphan'));
+    unsync($('#removeImpliedOrphans'), $('.impliedNotOrphan'));
     });
 });

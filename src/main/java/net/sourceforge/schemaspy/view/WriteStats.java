@@ -18,20 +18,20 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.model.Table;
-import net.sourceforge.schemaspy.model.TableColumn;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.model.TableColumn;
 
 /**
  * Simple ugly hack that provides details of what was written.
  */
 public class WriteStats {
-    private final Set<TableColumn> excludedColumns;
     private int numTables;
     private int numViews;
+    private final Set<TableColumn> excludedColumns;
 
     public WriteStats(Collection<Table> tables) {
         excludedColumns = new HashSet<TableColumn>();

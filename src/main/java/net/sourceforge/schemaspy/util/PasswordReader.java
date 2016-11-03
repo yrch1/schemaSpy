@@ -30,12 +30,6 @@ import java.util.Arrays;
 public class PasswordReader {
     private static PasswordReader instance;
 
-    /**
-     * Use {@link #getInstance()} instead.
-     */
-    protected PasswordReader() {
-    }
-
     public static synchronized PasswordReader getInstance() {
         if (instance == null) {
             try {
@@ -47,6 +41,12 @@ public class PasswordReader {
         }
 
         return instance;
+    }
+
+    /**
+     * Use {@link #getInstance()} instead.
+     */
+    protected PasswordReader() {
     }
 
     /**
@@ -124,11 +124,11 @@ public class PasswordReader {
      * the user is typing as their password.
      */
     private static class Masker extends Thread {
-        private final String mask;
         private volatile boolean masking = true;
+        private final String mask;
 
         /**
-         * @param prompt The prompt displayed to the user
+         *@param prompt The prompt displayed to the user
          */
         public Masker(String prompt) {
             // mask that will be printed every iteration

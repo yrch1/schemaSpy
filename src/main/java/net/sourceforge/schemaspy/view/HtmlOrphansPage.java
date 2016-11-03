@@ -18,17 +18,16 @@
  */
 package net.sourceforge.schemaspy.view;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.model.Database;
-import net.sourceforge.schemaspy.model.Table;
-import net.sourceforge.schemaspy.util.Dot;
-import net.sourceforge.schemaspy.util.LineWriter;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.model.Database;
+import net.sourceforge.schemaspy.model.Table;
+import net.sourceforge.schemaspy.util.Dot;
+import net.sourceforge.schemaspy.util.LineWriter;
 
 /**
  * The page that contains the all tables that aren't related to others (orphans)

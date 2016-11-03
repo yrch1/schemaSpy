@@ -18,14 +18,19 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.model.TableColumn;
 import net.sourceforge.schemaspy.model.TableIndex;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * The page that lists all of the columns in the schema,
@@ -68,6 +73,37 @@ public class HtmlColumnsPage extends HtmlFormatter {
         columns.add(new ColumnInfo("Default", new ByDefaultValueComparator()));
 
         return columns;
+    }
+
+    public class ColumnInfo {
+        private final String columnName;
+        private final Comparator<TableColumn> comparator;
+
+        private ColumnInfo(String columnName, Comparator<TableColumn> comparator) {
+            this.columnName = columnName;
+            this.comparator = comparator;
+        }
+
+        public String getColumnName() {
+            return columnName;
+        }
+
+        public String getLocation() {
+            return getLocation(columnName);
+        }
+
+        public String getLocation(String colName) {
+            return "columns.by" + colName + ".html";
+        }
+
+        private Comparator<TableColumn> getComparator() {
+            return comparator;
+        }
+
+        @Override
+        public String toString() {
+            return getLocation();
+        }
     }
 
     public void write(Database database, Collection<Table> tables, ColumnInfo columnInfo, boolean showOrphansDiagram, LineWriter html) throws IOException {
@@ -212,37 +248,6 @@ public class HtmlColumnsPage extends HtmlFormatter {
     @Override
     protected boolean isColumnsPage() {
         return true;
-    }
-
-    public class ColumnInfo {
-        private final String columnName;
-        private final Comparator<TableColumn> comparator;
-
-        private ColumnInfo(String columnName, Comparator<TableColumn> comparator) {
-            this.columnName = columnName;
-            this.comparator = comparator;
-        }
-
-        public String getColumnName() {
-            return columnName;
-        }
-
-        public String getLocation() {
-            return getLocation(columnName);
-        }
-
-        public String getLocation(String colName) {
-            return "columns.by" + colName + ".html";
-        }
-
-        private Comparator<TableColumn> getComparator() {
-            return comparator;
-        }
-
-        @Override
-        public String toString() {
-            return getLocation();
-        }
     }
 
     private class ByColumnComparator implements Comparator<TableColumn> {

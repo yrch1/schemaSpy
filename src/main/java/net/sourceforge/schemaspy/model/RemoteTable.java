@@ -18,13 +18,13 @@
  */
 package net.sourceforge.schemaspy.model;
 
-import net.sourceforge.schemaspy.Config;
-
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Pattern;
+
+import net.sourceforge.schemaspy.Config;
 
 /**
  * A table that's outside of the default schema but is referenced
@@ -42,7 +42,6 @@ public class RemoteTable extends Table {
 
     /**
      * Connect to the PK's referenced by this table that live in the original schema
-     *
      * @param tables
      * @param excludeIndirectColumns
      * @param excludeColumns

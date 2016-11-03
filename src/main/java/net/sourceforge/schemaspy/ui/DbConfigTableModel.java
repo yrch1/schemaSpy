@@ -18,12 +18,6 @@
  */
 package net.sourceforge.schemaspy.ui;
 
-import net.sourceforge.schemaspy.Config;
-import net.sourceforge.schemaspy.Config.MissingRequiredParameterException;
-import net.sourceforge.schemaspy.util.DbSpecificConfig;
-import net.sourceforge.schemaspy.util.DbSpecificOption;
-
-import javax.swing.table.AbstractTableModel;
 import java.beans.BeanInfo;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -32,6 +26,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import javax.swing.table.AbstractTableModel;
+
+import net.sourceforge.schemaspy.Config;
+import net.sourceforge.schemaspy.Config.MissingRequiredParameterException;
+import net.sourceforge.schemaspy.util.DbSpecificConfig;
+import net.sourceforge.schemaspy.util.DbSpecificOption;
 
 /**
  * @author John Currier

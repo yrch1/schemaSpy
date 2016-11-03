@@ -18,14 +18,18 @@
  */
 package net.sourceforge.schemaspy.view;
 
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import net.sourceforge.schemaspy.model.Database;
 import net.sourceforge.schemaspy.model.Table;
 import net.sourceforge.schemaspy.util.HtmlEncoder;
 import net.sourceforge.schemaspy.util.LineWriter;
-
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.*;
 
 /**
  * The main index that contains all tables and views that were evaluated

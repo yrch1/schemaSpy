@@ -18,19 +18,22 @@
  */
 package net.sourceforge.schemaspy.model;
 
-import lombok.extern.slf4j.Slf4j;
-import net.sourceforge.schemaspy.model.xml.TableColumnMeta;
-
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
-
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
-@Slf4j
+
+import net.sourceforge.schemaspy.model.xml.TableColumnMeta;
+
 public class TableColumn {
-    private static final boolean finerEnabled = logger.isTraceEnabled();
     private final Table table;
     private final String name;
     private final Object id;
@@ -39,22 +42,24 @@ public class TableColumn {
     private final int decimalDigits;
     private final String detailedSize;
     private final boolean isNullable;
-    private final Object defaultValue;
-    private final Map<TableColumn, ForeignKeyConstraint> parents = new HashMap<TableColumn, ForeignKeyConstraint>();
-    private final Map<TableColumn, ForeignKeyConstraint> children = new TreeMap<TableColumn, ForeignKeyConstraint>(new ColumnComparator());
     private boolean isAutoUpdated;
     private Boolean isUnique;
+    private final Object defaultValue;
     private String comments;
+    private final Map<TableColumn, ForeignKeyConstraint> parents = new HashMap<TableColumn, ForeignKeyConstraint>();
+    private final Map<TableColumn, ForeignKeyConstraint> children = new TreeMap<TableColumn, ForeignKeyConstraint>(new ColumnComparator());
     private boolean allowImpliedParents = true;
     private boolean allowImpliedChildren = true;
     private boolean isExcluded = false;
     private boolean isAllExcluded = false;
+    private static final Logger logger = Logger.getLogger(TableColumn.class.getName());
+    private static final boolean finerEnabled = logger.isLoggable(Level.FINER);
 
     /**
      * Create a column associated with a table.
      *
      * @param table Table the table that this column belongs to
-     * @param rs    ResultSet returned from {@link DatabaseMetaData#getColumns(String, String, String, String)}
+     * @param rs ResultSet returned from {@link DatabaseMetaData#getColumns(String, String, String, String)}
      * @throws SQLException
      */
     TableColumn(Table table, ResultSet rs, Pattern excludeIndirectColumns, Pattern excludeColumns) throws SQLException {
@@ -91,7 +96,7 @@ public class TableColumn {
         isAllExcluded = matches(excludeColumns);
         isExcluded = isAllExcluded || matches(excludeIndirectColumns);
         if (isExcluded && finerEnabled) {
-            logger.trace("Excluding column " + getTable() + '.' + getName() +
+            logger.finer("Excluding column " + getTable() + '.' + getName() +
                     ": matches " + excludeColumns + ":" + isAllExcluded + " " +
                     excludeIndirectColumns + ":" + matches(excludeIndirectColumns));
         }
@@ -148,7 +153,6 @@ public class TableColumn {
     /**
      * Type of the column.
      * See {@link DatabaseMetaData#getColumns(String, String, String, String)}'s <code>TYPE_NAME</code>.
-     *
      * @return
      */
     public String getType() {
@@ -159,7 +163,6 @@ public class TableColumn {
      * Length of the column.
      * See {@link DatabaseMetaData#getColumns(String, String, String, String)}'s <code>BUFFER_LENGTH</code>,
      * or if that's <code>null</code>, <code>COLUMN_SIZE</code>.
-     *
      * @return
      */
     public int getLength() {
@@ -275,7 +278,6 @@ public class TableColumn {
 
     /**
      * See {@link #getComments()}
-     *
      * @param comments
      */
     public void setComments(String comments) {
@@ -286,7 +288,7 @@ public class TableColumn {
      * Returns <code>true</code> if this column is to be excluded from relationship diagrams.
      * Unless {@link #isAllExcluded()} is true this column will be included in the detailed
      * diagrams of the containing table.
-     * <p/>
+     *
      * <p>This is typically an attempt to reduce clutter that can be introduced when many tables
      * reference a given column.
      *
@@ -299,7 +301,7 @@ public class TableColumn {
     /**
      * Returns <code>true</code> if this column is to be excluded from all relationships in
      * relationship diagrams.  This includes the detailed diagrams of the containing table.
-     * <p/>
+     *
      * <p>This is typically an attempt to reduce clutter that can be introduced when many tables
      * reference a given column.
      *
@@ -417,7 +419,6 @@ public class TableColumn {
     /**
      * Returns <code>Set</code> of <code>TableColumn</code>s that have a real (or implied) foreign key that
      * references this <code>TableColumn</code>.
-     *
      * @return Set
      */
     public Set<TableColumn> getChildren() {
@@ -473,6 +474,18 @@ public class TableColumn {
     }
 
     /**
+     * Two {@link TableColumn}s are considered equal if their tables and names match.
+     */
+    private class ColumnComparator implements Comparator<TableColumn> {
+        public int compare(TableColumn column1, TableColumn column2) {
+            int rc = column1.getTable().compareTo(column2.getTable());
+            if (rc == 0)
+                rc = column1.getName().compareToIgnoreCase(column2.getName());
+            return rc;
+        }
+    }
+
+    /**
      * Returns <code>true</code> if this column is permitted to be an implied FK
      * (based on name/type/size matches to PKs).
      *
@@ -490,17 +503,5 @@ public class TableColumn {
      */
     public boolean allowsImpliedChildren() {
         return allowImpliedChildren;
-    }
-
-    /**
-     * Two {@link TableColumn}s are considered equal if their tables and names match.
-     */
-    private class ColumnComparator implements Comparator<TableColumn> {
-        public int compare(TableColumn column1, TableColumn column2) {
-            int rc = column1.getTable().compareTo(column2.getTable());
-            if (rc == 0)
-                rc = column1.getName().compareToIgnoreCase(column2.getName());
-            return rc;
-        }
     }
 }

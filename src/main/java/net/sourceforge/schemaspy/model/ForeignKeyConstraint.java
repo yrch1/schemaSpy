@@ -18,31 +18,32 @@
  */
 package net.sourceforge.schemaspy.model;
 
-import lombok.extern.slf4j.Slf4j;
+import static java.sql.DatabaseMetaData.importedKeyCascade;
+import static java.sql.DatabaseMetaData.importedKeyNoAction;
+import static java.sql.DatabaseMetaData.importedKeyRestrict;
+import static java.sql.DatabaseMetaData.importedKeySetNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-
-
-import static java.sql.DatabaseMetaData.*;
+import java.util.logging.Logger;
 
 /**
  * Represents a <a href='http://en.wikipedia.org/wiki/Foreign_key'>
  * Foreign Key Constraint</a> that "ties" a child table to a parent table
  * via foreign and primary keys.
  */
-@Slf4j
 public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
-    private final static boolean finerEnabled = logger.isTraceEnabled();
     private final String name;
+    private Table parentTable;
     private final List<TableColumn> parentColumns = new ArrayList<TableColumn>();
     private final Table childTable;
     private final List<TableColumn> childColumns = new ArrayList<TableColumn>();
     private final int deleteRule;
     private final int updateRule;
-    private Table parentTable;
+    private final static Logger logger = Logger.getLogger(ForeignKeyConstraint.class.getName());
+    private final static boolean finerEnabled = logger.isLoggable(Level.FINER);
 
     /**
      * Construct a foreign key for the specified child table.
@@ -55,7 +56,7 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
     ForeignKeyConstraint(Table child, String name, int updateRule, int deleteRule) {
         this.name = name; // implied constraints will have a null name and override getName()
         if (finerEnabled)
-            logger.trace("Adding foreign key constraint '" + getName() + "' to " + child);
+            logger.finer("Adding foreign key constraint '" + getName() + "' to " + child);
         childTable = child;
         this.deleteRule = deleteRule;
         this.updateRule = updateRule;
@@ -90,19 +91,6 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
      */
     public ForeignKeyConstraint(TableColumn parentColumn, TableColumn childColumn) {
         this(parentColumn, childColumn, importedKeyNoAction, importedKeyNoAction);
-    }
-
-    /**
-     * Static method that returns a string representation of the specified
-     * list of {@link TableColumn columns}.
-     *
-     * @param columns
-     * @return
-     */
-    public static String toString(List<TableColumn> columns) {
-        if (columns.size() == 1)
-            return columns.iterator().next().toString();
-        return columns.toString();
     }
 
     /**
@@ -277,7 +265,7 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
     /**
      * Returns <code>true</code> if this is an implied constraint or
      * <code>false</code> if it is "real".
-     * <p/>
+     *
      * Subclasses that implement implied constraints should override this method.
      *
      * @return
@@ -304,6 +292,7 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
      * unique across all schemas being evaluated
      *
      * @param other ForeignKeyConstraint
+     *
      * @return
      */
     public int compareTo(ForeignKeyConstraint other) {
@@ -324,6 +313,19 @@ public class ForeignKeyConstraint implements Comparable<ForeignKeyConstraint> {
         }
 
         return rc;
+    }
+
+    /**
+     * Static method that returns a string representation of the specified
+     * list of {@link TableColumn columns}.
+     *
+     * @param columns
+     * @return
+     */
+    public static String toString(List<TableColumn> columns) {
+        if (columns.size() == 1)
+            return columns.iterator().next().toString();
+        return columns.toString();
     }
 
     /**
